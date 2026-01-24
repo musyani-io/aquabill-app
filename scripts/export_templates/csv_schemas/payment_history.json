@@ -1,0 +1,11 @@
+{
+	"columns": [
+		"date",
+		"client_id",
+		"client_name",
+		"phone_number",
+		"amount_tzs",
+		"payment_method",
+		"reference"
+	]
+}

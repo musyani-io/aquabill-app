@@ -1,0 +1,15 @@
+[Unit]
+Description=AquaBill Celery Worker Service
+After=network.target redis.service postgresql.service
+
+[Service]
+Type=simple
+User=aquabill
+WorkingDirectory=/opt/aquabill
+Environment="PATH=/opt/aquabill/venv/bin"
+ExecStart=/opt/aquabill/venv/bin/celery -A app.tasks.celery_app worker --loglevel=info
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
