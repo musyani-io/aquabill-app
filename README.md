@@ -35,10 +35,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ## Next
 
-See guideline.md and TODOs.md for the implementation plan and sequencing.
+See docs/guideline.md and docs/TODOs.md for the implementation plan and sequencing.
 
 ## Repo Layout
 
 - app/: FastAPI application modules (api, core, domain)
 - migrations/: Alembic migrations (to be configured)
 - tests/: Pytest tests (basic health check provided)
+- docs/: Project documentation (guideline, TODOs, development, deployment)
