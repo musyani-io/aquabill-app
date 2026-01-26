@@ -1,2 +1,6 @@
 # Personal 
 imp_stuffs
+
+# Virtual environments
+.venv
+*venv
