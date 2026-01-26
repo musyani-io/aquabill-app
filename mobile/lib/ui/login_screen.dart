@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
+import '../core/config.dart';
+import '../data/remote/auth_api_client.dart';
+import '../data/remote/auth_dtos.dart';
+import 'signup_screen.dart';
 
 /// Login screen for admin and collector authentication
 class LoginScreen extends StatefulWidget {
@@ -12,16 +16,17 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _tokenController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   
   UserRole _selectedRole = UserRole.collector;
   bool _loading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _usernameController.dispose();
-    _tokenController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -34,13 +39,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final username = _usernameController.text.trim();
-      final token = _tokenController.text.trim();
+      final password = _passwordController.text.trim();
+      final authClient = AuthApiClient(baseUrl: Config.apiBaseUrl);
 
-      // Login with token and role
+      late LoginResponse response;
+
+      if (_selectedRole == UserRole.admin) {
+        // Admin login
+        final request = AdminLoginRequest(
+          username: username,
+          password: password,
+        );
+        response = await authClient.loginAdmin(request);
+      } else {
+        // Collector login - password only
+        // Note: In a real app, collector IDs would be fetched from a list first
+        // For now, this will fail if collector ID is not known
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Collector login requires collector ID. Please contact your admin.'),
+          ),
+        );
+        setState(() => _loading = false);
+        return;
+      }
+
       await AuthService().login(
-        token: token,
+        token: response.token,
         role: _selectedRole,
-        username: username,
+        username: response.name,
       );
 
       if (mounted) {
@@ -148,41 +175,55 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Username Field
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
+                  // Username Field (only for admin)
+                  if (_selectedRole == UserRole.admin) ...[
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      validator: (value) {
+                        if (_selectedRole == UserRole.admin &&
+                            (value == null || value.trim().isEmpty)) {
+                          return 'Username is required';
+                        }
+                        return null;
+                      },
+                      textInputAction: TextInputAction.next,
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Username is required';
-                      }
-                      return null;
-                    },
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
 
-                  // Token Field
+                  // Password Field
                   TextFormField(
-                    controller: _tokenController,
-                    decoration: const InputDecoration(
-                      labelText: 'Access Token',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.key),
-                      helperText: 'Enter your bearer token',
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock),
+                      helperText: _selectedRole == UserRole.collector
+                          ? 'Enter your collector password'
+                          : 'Enter your admin password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                      ),
                     ),
-                    obscureText: true,
-                    maxLines: 1,
+                    obscureText: _obscurePassword,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Token is required';
+                        return 'Password is required';
                       }
-                      if (value.trim().length < 10) {
-                        return 'Token must be at least 10 characters';
+                      if (value.trim().length < 4) {
+                        return 'Password must be at least 4 characters';
                       }
                       return null;
                     },
@@ -225,14 +266,39 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Help Text
-                  Text(
-                    'Contact your administrator to get an access token',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                  // Admin Sign Up Option
+                  if (_selectedRole == UserRole.admin) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Don\'t have an admin account? ',
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                  ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Sign Up'),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  // Help Text
+                  if (_selectedRole == UserRole.collector)
+                    Text(
+                      'Contact your administrator if you forgot your password',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
                 ],
               ),
             ),

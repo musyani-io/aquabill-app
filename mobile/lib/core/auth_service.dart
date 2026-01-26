@@ -53,6 +53,11 @@ class AuthService {
     return await _storage.getCustom('username');
   }
 
+  /// Get current authentication token
+  Future<String?> getToken() async {
+    return await _storage.getToken();
+  }
+
   /// Logout
   Future<void> logout() async {
     await _storage.saveToken('');
