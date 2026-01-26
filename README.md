@@ -8,20 +8,20 @@ AquaBill is an offline-capable water meter reading and billing management system
 
 1. Create a virtualenv and install deps:
 
-```
+```bash
 python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
 
-2. Run the API:
+1. Run the API:
 
-```
+```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-3. Health check: http://localhost:8000/api/v1/health
+1. Health check: <http://localhost:8000/api/v1/health>
 
 ### Render (Free)
 
@@ -36,3 +36,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 ## Next
 
 See guideline.md and TODOs.md for the implementation plan and sequencing.
+
+## Repo Layout
+
+- app/: FastAPI application modules (api, core, domain)
+- migrations/: Alembic migrations (to be configured)
+- tests/: Pytest tests (basic health check provided)
