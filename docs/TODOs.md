@@ -53,10 +53,14 @@ High-level, sequenced tasks to build AquaBill. Progress snapshot: Phases 0–4 p
 
 ## Phase 5 — Mobile (Flutter) — Next
 
-1. Local SQLite schema for 12 cycles + assignments
-2. Offline capture UI: search + show phone number
-3. Show previous approved reading (read-only), input absolute up to 4dp
-4. Background sync; conflict flagging; server-wins handling
+1. Finalize mobile API contract (bootstrap, updates, readings, conflicts) and align payloads
+2. Implement backend endpoints for bootstrap/updates if not present (deltas + tombstones)
+3. Scaffold Flutter app (modules: data/local, data/remote, domain, ui, core)
+4. Build SQLite schema + DAOs and trimming for 12-cycle cache; add migrations
+5. Offline capture flow: search, show phone, previous approved reading (read-only), absolute input 4dp, notes, enqueue to sync_queue
+6. Background sync engine: upload queue with conflict handling; download deltas with server-wins merge; reachability via health
+7. Conflicts UI: list, detail, accept server or edit-and-resubmit
+8. Settings: token storage, sync preferences (Wi-Fi-only toggle), device id display, last sync time
 
 ## Phase 6 — Testing & DevOps — Upcoming
 
