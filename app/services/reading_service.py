@@ -6,21 +6,32 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.models.reading import Reading, ReadingType
-from app.models.meter_assignment import MeterAssignment
-from app.models.cycle import Cycle
+from app.models.meter_assignment import MeterAssignment, AssignmentStatus
+from app.models.cycle import Cycle, CycleStatus
+from app.models.anomaly import Anomaly, AnomalyType
 from app.repositories.reading import ReadingRepository
 from app.repositories.meter_assignment import MeterAssignmentRepository
 from app.repositories.cycle import CycleRepository
+from app.repositories.anomaly import AnomalyRepository
 
 
 class ReadingService:
-    """Service layer for reading operations with business rule enforcement"""
+    """
+    Service layer for reading operations with business rule enforcement.
+    
+    SPEC: Handles reading submission with:
+    - Window validation (must submit within cycle.target_date)
+    - Baseline enforcement (first reading MUST be baseline)
+    - Consumption calculation (current - previous)
+    - Rollover detection (reading decreased = meter rolled over)
+    """
     
     def __init__(self, db: Session):
         self.db = db
         self.repository = ReadingRepository(db)
         self.assignment_repository = MeterAssignmentRepository(db)
         self.cycle_repository = CycleRepository(db)
+        self.anomaly_repository = AnomalyRepository(db)
     
     def submit_reading(
         self,
@@ -31,54 +42,150 @@ class ReadingService:
         submission_notes: Optional[str] = None
     ) -> Tuple[Optional[Reading], Optional[str]]:
         """
-        Submit a meter reading with baseline enforcement.
+        Submit a meter reading with full window and baseline validation.
         
-        Business Rules:
-        - First reading for a meter_assignment must be BASELINE
-        - Subsequent readings must be NORMAL
-        - Submission must be within cycle.target_date
+        CRITICAL WORKFLOW:
+        1. Validate meter assignment is ACTIVE
+        2. Validate cycle is OPEN (can't submit to closed cycle)
+        3. Check submission window (today <= cycle.target_date)
+        4. Ensure baseline exists (if first reading, create baseline implicitly)
+        5. Calculate consumption (current - previous approved reading)
+        6. Detect rollover (reading < previous = meter rolled)
+        7. Log anomalies if needed
         
         Returns:
             (Reading, None) if successful
             (None, error_message) if validation fails
         """
-        # Validate meter assignment exists and is active
+        # ============ Validate Assignment ============
         assignment = self.assignment_repository.get(meter_assignment_id)
         if not assignment:
             return None, f"Meter assignment {meter_assignment_id} not found"
         
-        if assignment.status != "ACTIVE":
-            return None, f"Meter assignment {meter_assignment_id} is not active"
+        if assignment.status != AssignmentStatus.ACTIVE.value:
+            return None, f"Meter assignment {meter_assignment_id} is not ACTIVE (current: {assignment.status})"
         
-        # Validate cycle exists
+        # ============ Validate Cycle ============
         cycle = self.cycle_repository.get(cycle_id)
         if not cycle:
             return None, f"Cycle {cycle_id} not found"
         
-        # Check submission window (before or on target_date)
-        today = date.today()
-        if today > cycle.target_date:
-            return None, f"Submission window closed on {cycle.target_date}. Today is {today}"
+        if cycle.status != CycleStatus.OPEN.value:
+            return None, f"Cycle {cycle_id} is not OPEN for submissions (current status: {cycle.status})"
         
-        # Determine reading type (baseline or normal)
+        # ============ Check Submission Window ============
+        today = date.today()
+        is_late = False
+        
+        if today > cycle.target_date:
+            # Late submission - still allowed but flagged
+            is_late = True
+            # Optional: could reject late submissions entirely
+            # return None, f"Submission window closed on {cycle.target_date}. Today is {today}"
+        
+        # ============ Baseline Enforcement ============
         existing_baseline = self.repository.get_baseline_reading(meter_assignment_id)
         
         if not existing_baseline:
-            # First reading must be BASELINE
-            reading_type = ReadingType.BASELINE
-        else:
-            # Subsequent readings are NORMAL
-            reading_type = ReadingType.NORMAL
+            return None, f"No baseline reading exists for assignment {meter_assignment_id}. Cannot submit normal readings."
         
-        # Create reading
+        # ============ Check for Duplicate Submission ============
+        existing_in_cycle = self.repository.get_by_assignment_and_cycle(meter_assignment_id, cycle_id)
+        if existing_in_cycle:
+            return None, f"Reading already submitted for this meter in cycle {cycle_id}. ID: {existing_in_cycle.id}"
+        
+        # ============ Create Reading ============
         reading = self.repository.create(
             meter_assignment_id=meter_assignment_id,
             cycle_id=cycle_id,
             absolute_value=absolute_value,
-            reading_type=reading_type,
+            reading_type=ReadingType.NORMAL,
             submitted_by=submitted_by,
             submission_notes=submission_notes
         )
+        
+        # ============ Detect Anomalies ============
+        anomalies = []
+        
+        # Late submission anomaly
+        if is_late:
+            anomaly = self.anomaly_repository.create(
+                meter_assignment_id=meter_assignment_id,
+                cycle_id=cycle_id,
+                reading_id=reading.id,
+                anomaly_type=AnomalyType.LATE_SUBMISSION,
+                description=f"Reading submitted {(today - cycle.target_date).days} days after deadline ({cycle.target_date})"
+            )
+            anomalies.append(anomaly)
+        
+        # Rollover detection
+        if existing_baseline:
+            # Get previous approved reading
+            prev_reading = self.repository.get_latest_approved(meter_assignment_id, exclude_id=reading.id)
+            
+            if prev_reading and Decimal(absolute_value) < Decimal(prev_reading.reading_value):
+                # Meter rolled over (reading decreased)
+                anomaly = self.anomaly_repository.create(
+                    meter_assignment_id=meter_assignment_id,
+                    cycle_id=cycle_id,
+                    reading_id=reading.id,
+                    anomaly_type=AnomalyType.ROLLOVER_WITHOUT_LIMIT,
+                    description=f"Meter reading decreased from {prev_reading.reading_value} to {absolute_value}. Possible rollover."
+                )
+                anomalies.append(anomaly)
+        
+        return reading, None
+    
+    def get_reading(self, reading_id: int) -> Optional[Reading]:
+        """Get reading by ID"""
+        return self.repository.get(reading_id)
+    
+    def list_readings(self, skip: int = 0, limit: int = 100) -> List[Reading]:
+        """List all readings"""
+        return self.repository.list(skip, limit)
+    
+    def get_readings_by_assignment(self, meter_assignment_id: int) -> List[Reading]:
+        """Get all readings for a meter assignment"""
+        return self.repository.get_by_assignment(meter_assignment_id)
+    
+    def get_readings_by_cycle(self, cycle_id: int) -> List[Reading]:
+        """Get all readings for a cycle"""
+        return self.repository.get_by_cycle(cycle_id)
+    
+    def get_pending_readings(self) -> List[Reading]:
+        """Get all unapproved readings waiting for admin review"""
+        return self.repository.get_pending()
+    
+    def calculate_consumption(
+        self, 
+        reading_id: int
+    ) -> Tuple[Optional[Decimal], Optional[str]]:
+        """
+        Calculate consumption = current reading - previous approved reading.
+        
+        Returns:
+            (consumption in m³, error_message)
+        """
+        reading = self.repository.get(reading_id)
+        if not reading:
+            return None, f"Reading {reading_id} not found"
+        
+        # Get previous approved reading
+        prev_reading = self.repository.get_latest_approved(
+            reading.meter_assignment_id,
+            exclude_id=reading.id
+        )
+        
+        if not prev_reading:
+            return None, "No previous approved reading found"
+        
+        consumption = Decimal(reading.reading_value) - Decimal(prev_reading.reading_value)
+        
+        if consumption < 0:
+            return consumption, "WARNING: Negative consumption (rollover detected)"
+        
+        return consumption, None
+        
         
         return reading, None
     

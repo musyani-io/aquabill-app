@@ -46,18 +46,70 @@ class ReadingRepository:
         """List all readings (newest first)"""
         return self.db.query(Reading).order_by(desc(Reading.created_at)).offset(skip).limit(limit).all()
     
-    def list_by_assignment(self, meter_assignment_id: int, approved_only: bool = False) -> List[Reading]:
+    def get_by_assignment(self, meter_assignment_id: int, approved_only: bool = False) -> List[Reading]:
         """Get all readings for a meter assignment, ordered by submitted_at"""
         query = self.db.query(Reading).filter(Reading.meter_assignment_id == meter_assignment_id)
         
         if approved_only:
-            query = query.filter(Reading.approved == True)
+            query = query.filter(Reading.is_approved == True)
         
         return query.order_by(Reading.submitted_at).all()
     
-    def list_by_cycle(self, cycle_id: int, approved_only: bool = False) -> List[Reading]:
+    def get_by_cycle(self, cycle_id: int, approved_only: bool = False) -> List[Reading]:
         """Get all readings for a cycle"""
         query = self.db.query(Reading).filter(Reading.cycle_id == cycle_id)
+        
+        if approved_only:
+            query = query.filter(Reading.is_approved == True)
+        
+        return query.order_by(Reading.submitted_at).all()
+    
+    def get_by_assignment_and_cycle(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int
+    ) -> Optional[Reading]:
+        """Get reading for specific assignment and cycle (should be at most 1)"""
+        return self.db.query(Reading).filter(
+            and_(
+                Reading.meter_assignment_id == meter_assignment_id,
+                Reading.cycle_id == cycle_id
+            )
+        ).first()
+    
+    def get_baseline_reading(self, meter_assignment_id: int) -> Optional[Reading]:
+        """Get the baseline reading for a meter assignment"""
+        return self.db.query(Reading).filter(
+            and_(
+                Reading.meter_assignment_id == meter_assignment_id,
+                Reading.reading_type == ReadingType.BASELINE.value
+            )
+        ).first()
+    
+    def get_latest_approved(
+        self,
+        meter_assignment_id: int,
+        exclude_id: Optional[int] = None
+    ) -> Optional[Reading]:
+        """
+        Get the most recent approved reading for a meter assignment.
+        Excludes the specified reading if provided.
+        """
+        query = self.db.query(Reading).filter(
+            and_(
+                Reading.meter_assignment_id == meter_assignment_id,
+                Reading.is_approved == True
+            )
+        )
+        
+        if exclude_id:
+            query = query.filter(Reading.id != exclude_id)
+        
+        return query.order_by(desc(Reading.submitted_at)).first()
+    
+    def get_pending(self) -> List[Reading]:
+        """Get all unapproved readings (for admin review)"""
+        return self.db.query(Reading).filter(Reading.is_approved == False).order_by(Reading.submitted_at).all()
         
         if approved_only:
             query = query.filter(Reading.approved == True)
