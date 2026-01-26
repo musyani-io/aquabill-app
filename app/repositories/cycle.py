@@ -43,6 +43,13 @@ class CycleRepository:
         """Get the currently open cycle (should be at most one)"""
         return self.db.query(Cycle).filter(Cycle.status == CycleStatus.OPEN.value).first()
     
+    def get_by_date(self, check_date: date) -> Optional[Cycle]:
+        """Get the cycle that contains a given date"""
+        return self.db.query(Cycle).filter(
+            Cycle.start_date <= check_date,
+            Cycle.end_date >= check_date
+        ).first()
+    
     def get_overlapping(self, start_date: date, end_date: date, exclude_id: Optional[int] = None) -> List[Cycle]:
         """
         Find cycles that overlap with the given date range.
