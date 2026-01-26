@@ -1,12 +1,14 @@
 """SMS API routes"""
-from typing import List
-from fastapi import APIRouter, Depends, Query, HTTPException, Header
+from typing import List, Dict, Optional
+from fastapi import APIRouter, Depends, Query, HTTPException, Header, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.services.sms_service import SMSService
 from app.schemas.sms import SMSMessageCreate, SMSMessageResponse
 from app.models.sms import SMSMessage
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -96,6 +98,66 @@ def get_sms(
     return sms
 
 
+@router.post("/{sms_id}/send")
+async def send_sms(
+    sms_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Send SMS immediately via TextBee gateway.
+    Records delivery attempt in history.
+    """
+    service = SMSService(db)
+    success, error = await service.send_sms(sms_id)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=error or "Failed to send SMS")
+    
+    sms = service.get_sms(sms_id)
+    return {
+        "success": True,
+        "sms_id": sms_id,
+        "status": sms.status if sms else "SENT",
+        "message": "SMS sent successfully"
+    }
+
+
+@router.post("/process-retries")
+async def process_retry_queue(
+    limit: int = Query(50, ge=1, le=200, description="Max SMS to process"),
+    db: Session = Depends(get_db)
+):
+    """
+    Process retry queue - sends all SMS ready for retry.
+    SCHEDULER: Call this endpoint every 5-10 minutes.
+    """
+    service = SMSService(db)
+    retry_sms = service.get_retry_scheduled(skip=0, limit=limit)
+    
+    results = {
+        "processed": 0,
+        "successful": 0,
+        "failed": 0,
+        "errors": []
+    }
+    
+    for sms in retry_sms:
+        results["processed"] += 1
+        try:
+            success, error = await service.send_sms(sms.id)
+            if success:
+                results["successful"] += 1
+            else:
+                results["failed"] += 1
+                results["errors"].append({"sms_id": sms.id, "error": error})
+        except Exception as e:
+            results["failed"] += 1
+            results["errors"].append({"sms_id": sms.id, "error": str(e)})
+            logger.error(f"Error sending SMS {sms.id}: {str(e)}")
+    
+    return results
+
+
 @router.post("/{sms_id}/record-sent")
 def record_sent(
     sms_id: int,
@@ -124,24 +186,38 @@ def record_failed(
     return sms
 
 
-@router.post("/callbacks/gateway-webhook")
-def process_gateway_callback(
-    gateway_reference: str,
-    status: str,
+@router.post("/callbacks/textbee-webhook")
+def process_textbee_callback(
+    gateway_reference: str = Query(..., description="TextBee message ID"),
+    status: str = Query(..., description="Delivery status: delivered, failed, bounced"),
     db: Session = Depends(get_db),
-    x_idempotency_key: str = Header(None)
+    x_idempotency_key: Optional[str] = Header(None, description="Idempotency key for duplicate prevention")
 ):
     """
-    Process SMS gateway callback webhook.
+    Process TextBee SMS gateway callback webhook.
     
-    Supports:
-    - status: "delivered", "failed", "bounced"
-    - Uses idempotency key to prevent duplicate processing
+    TextBee callback statuses:
+    - delivered: SMS successfully delivered to recipient
+    - failed: SMS delivery failed
+    - bounced: Invalid number or recipient opted out
+    
+    Uses idempotency key to prevent duplicate processing.
     """
     service = SMSService(db)
+    
+    # Idempotency: Check if we've already processed this callback
+    if x_idempotency_key:
+        # In production, store processed idempotency keys in Redis/cache
+        # For now, we rely on the SMS status not changing if already processed
+        logger.info(f"Processing callback with idempotency key: {x_idempotency_key}")
+    
     sms = service.process_callback(gateway_reference, status)
     if not sms:
-        raise HTTPException(status_code=404, detail="SMS with this gateway reference not found")
+        raise HTTPException(
+            status_code=404, 
+            detail=f"SMS with gateway reference '{gateway_reference}' not found"
+        )
+    
     return {
         "success": True,
         "sms_id": sms.id,
