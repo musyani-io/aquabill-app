@@ -2,8 +2,9 @@
 Anomaly service - business logic for anomaly tracking and audit trail.
 """
 from typing import List, Optional, Tuple
+from decimal import Decimal
 from sqlalchemy.orm import Session
-from app.models.anomaly import Anomaly, AnomalyStatus
+from app.models.anomaly import Anomaly, AnomalyStatus, AnomalyType
 from app.repositories.anomaly import AnomalyRepository
 
 
@@ -80,3 +81,122 @@ class AnomalyService:
         
         updated = self.repository.resolve(anomaly_id, resolved_by, resolution_notes)
         return updated, None
+    
+    def log_negative_consumption(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        reading_id: int,
+        current_reading: Decimal,
+        previous_reading: Decimal,
+        consumption: Decimal
+    ) -> Anomaly:
+        """
+        Log negative consumption anomaly (potential rollover).
+        Called automatically during consumption calculation.
+        """
+        description = (
+            f"Negative consumption detected: {consumption:.2f} m³. "
+            f"Current: {current_reading:.2f}, Previous: {previous_reading:.2f}. "
+            f"Possible meter rollover."
+        )
+        return self.create_anomaly(
+            anomaly_type=AnomalyType.NEGATIVE_CONSUMPTION.value,
+            description=description,
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading_id,
+            severity="WARNING"
+        )
+    
+    def log_rollover_without_limit(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        reading_id: int,
+        meter_serial: str
+    ) -> Anomaly:
+        """
+        Log rollover detected but meter max digits unknown.
+        Admin needs to verify and update meter max_digits.
+        """
+        description = (
+            f"Rollover detected for meter {meter_serial} but max_digits not configured. "
+            f"Unable to calculate correct consumption. Admin verification required."
+        )
+        return self.create_anomaly(
+            anomaly_type=AnomalyType.ROLLOVER_WITHOUT_LIMIT.value,
+            description=description,
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading_id,
+            severity="CRITICAL"
+        )
+    
+    def log_double_submission(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        reading_id: int,
+        existing_reading_id: int
+    ) -> Anomaly:
+        """
+        Log multiple reading submissions in same cycle.
+        """
+        description = (
+            f"Multiple readings submitted for same cycle. "
+            f"Existing: reading_id={existing_reading_id}, New: reading_id={reading_id}. "
+            f"Review which reading is correct."
+        )
+        return self.create_anomaly(
+            anomaly_type=AnomalyType.DOUBLE_SUBMISSION.value,
+            description=description,
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading_id,
+            severity="WARNING"
+        )
+    
+    def log_late_submission(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        reading_id: int,
+        days_late: int
+    ) -> Anomaly:
+        """
+        Log reading submitted after cycle deadline.
+        """
+        description = (
+            f"Reading submitted {days_late} days after cycle deadline. "
+            f"Late submission may affect billing accuracy."
+        )
+        return self.create_anomaly(
+            anomaly_type=AnomalyType.LATE_SUBMISSION.value,
+            description=description,
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading_id,
+            severity="INFO"
+        )
+    
+    def log_missing_baseline(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        meter_serial: str
+    ) -> Anomaly:
+        """
+        Log missing baseline reading for meter.
+        """
+        description = (
+            f"No baseline reading found for meter {meter_serial}. "
+            f"Cannot calculate consumption. Baseline reading required."
+        )
+        return self.create_anomaly(
+            anomaly_type=AnomalyType.MISSING_BASELINE.value,
+            description=description,
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            severity="CRITICAL"
+        )
