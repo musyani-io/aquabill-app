@@ -98,7 +98,7 @@ class ReadingRepository:
         query = self.db.query(Reading).filter(
             and_(
                 Reading.meter_assignment_id == meter_assignment_id,
-                Reading.is_approved == True
+                Reading.approved == True
             )
         )
         
@@ -109,7 +109,7 @@ class ReadingRepository:
     
     def get_pending(self) -> List[Reading]:
         """Get all unapproved readings (for admin review)"""
-        return self.db.query(Reading).filter(Reading.is_approved == False).order_by(Reading.submitted_at).all()
+        return self.db.query(Reading).filter(Reading.approved == False).order_by(Reading.submitted_at).all()
         
         if approved_only:
             query = query.filter(Reading.approved == True)
@@ -142,6 +142,17 @@ class ReadingRepository:
             query = query.filter(Reading.id != exclude_reading_id)
         
         return query.order_by(desc(Reading.submitted_at)).first()
+
+    def get_approved_by_cycle(self, cycle_id: int) -> List[Reading]:
+        """Get all approved readings for a given cycle."""
+        return (
+            self.db.query(Reading)
+            .filter(
+                Reading.cycle_id == cycle_id,
+                Reading.approved == True
+            )
+            .all()
+        )
     
     def approve(
         self,

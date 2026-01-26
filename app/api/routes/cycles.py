@@ -3,6 +3,7 @@ Cycle API routes - billing cycle management endpoints.
 """
 from typing import List
 from datetime import date
+from decimal import Decimal
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
@@ -161,6 +162,35 @@ def auto_transition_overdue(db: Session = Depends(get_db)):
         "updated_count": count,
         "updated_ids": [c.id for c in transitioned],
         "message": f"Auto-transitioned {count} overdue cycles to PENDING_REVIEW"
+    }
+
+
+@router.post("/{cycle_id}/charges")
+def generate_cycle_charges(
+    cycle_id: int,
+    rate_per_m3: float = Query(..., gt=0, description="Tariff per m3"),
+    created_by: str = Query("system", description="Username recording charges"),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate CHARGE ledger entries for all approved readings in a cycle.
+    Idempotent per meter_assignment+cycle (skips if a charge already exists).
+    """
+    service = CycleService(db)
+    entries, summary_or_error = service.generate_cycle_charges(
+        cycle_id=cycle_id,
+        rate_per_m3=Decimal(str(rate_per_m3)),
+        created_by=created_by
+    )
+
+    if "error" in summary_or_error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=summary_or_error["error"])
+
+    return {
+        "created_count": summary_or_error["created"],
+        "skipped_existing": summary_or_error["skipped_existing"],
+        "skipped_zero_amount": summary_or_error["skipped_zero_amount"],
+        "entry_ids": [e.id for e in entries]
     }
 
 

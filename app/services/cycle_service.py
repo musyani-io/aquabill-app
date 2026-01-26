@@ -2,10 +2,14 @@
 Cycle service - business logic for billing cycle management.
 """
 from datetime import date, datetime, timedelta
-from typing import List, Optional, Tuple
+from decimal import Decimal, ROUND_HALF_UP
+from typing import List, Optional, Tuple, Dict
 from sqlalchemy.orm import Session
 from app.models.cycle import Cycle, CycleStatus
 from app.repositories.cycle import CycleRepository
+from app.repositories.reading import ReadingRepository
+from app.repositories.ledger_entry import LedgerEntryRepository
+from app.models.ledger_entry import LedgerEntryType
 
 
 class CycleService:
@@ -23,6 +27,8 @@ class CycleService:
     def __init__(self, db: Session):
         self.repository = CycleRepository(db)
         self.db = db
+        self.reading_repository = ReadingRepository(db)
+        self.ledger_repository = LedgerEntryRepository(db)
     
     def create_cycle(
         self, 
@@ -171,6 +177,72 @@ class CycleService:
             if updated:
                 transitioned.append(updated)
         return transitioned, len(transitioned)
+
+    def generate_cycle_charges(
+        self,
+        cycle_id: int,
+        rate_per_m3: Decimal,
+        created_by: str = "system"
+    ) -> Tuple[List, Dict]:
+        """
+        Generate CHARGE ledger entries for approved readings in a cycle.
+        Idempotent per meter_assignment+cycle (skips if charge already exists).
+        """
+        cycle = self.repository.get(cycle_id)
+        if not cycle:
+            return [], {"error": f"Cycle {cycle_id} not found"}
+        if cycle.status != CycleStatus.APPROVED.value and cycle.status != CycleStatus.PENDING_REVIEW.value:
+            return [], {"error": f"Cycle {cycle_id} must be PENDING_REVIEW or APPROVED to generate charges (current: {cycle.status})"}
+
+        approved_readings = self.reading_repository.get_approved_by_cycle(cycle_id)
+
+        # Sum consumption per meter assignment
+        consumption_map: Dict[int, Decimal] = {}
+        for r in approved_readings:
+            if r.consumption is None:
+                continue
+            if r.has_rollover:
+                # Skip unresolved rollovers to avoid billing errors
+                continue
+            consumption = Decimal(r.consumption)
+            if consumption < 0:
+                continue
+            consumption_map[r.meter_assignment_id] = consumption_map.get(r.meter_assignment_id, Decimal(0)) + consumption
+
+        created_entries = []
+        skipped = {"existing": 0, "zero_amount": 0}
+
+        for assignment_id, total_m3 in consumption_map.items():
+            if total_m3 <= 0:
+                skipped["zero_amount"] += 1
+                continue
+
+            # Idempotency: skip if a CHARGE already exists for this assignment+cycle
+            existing = self.ledger_repository.get_charge_for_assignment_cycle(assignment_id, cycle_id)
+            if existing:
+                skipped["existing"] += 1
+                continue
+
+            amount = (total_m3 * rate_per_m3).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            description = f"Cycle {cycle_id} charge: {total_m3} m3 @ {rate_per_m3} per m3"
+
+            entry = self.ledger_repository.create(
+                meter_assignment_id=assignment_id,
+                cycle_id=cycle_id,
+                entry_type=LedgerEntryType.CHARGE,
+                amount=amount,
+                is_credit=False,
+                description=description,
+                created_by=created_by,
+            )
+            created_entries.append(entry)
+
+        summary = {
+            "created": len(created_entries),
+            "skipped_existing": skipped["existing"],
+            "skipped_zero_amount": skipped["zero_amount"],
+        }
+        return created_entries, summary
     
     def transition_status(
         self, 

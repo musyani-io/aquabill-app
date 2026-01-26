@@ -58,3 +58,15 @@ class LedgerEntryRepository:
             .order_by(desc(LedgerEntry.created_at))
             .all()
         )
+
+    def get_charge_for_assignment_cycle(self, meter_assignment_id: int, cycle_id: int) -> Optional[LedgerEntry]:
+        """Return existing CHARGE entry for assignment+cycle if any (idempotency)."""
+        return (
+            self.db.query(LedgerEntry)
+            .filter(
+                LedgerEntry.meter_assignment_id == meter_assignment_id,
+                LedgerEntry.cycle_id == cycle_id,
+                LedgerEntry.entry_type == LedgerEntryType.CHARGE.value
+            )
+            .first()
+        )
