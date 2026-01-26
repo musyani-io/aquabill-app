@@ -94,8 +94,8 @@ class TextBeeClient:
     
     def validate_phone_number(self, phone_number: str) -> bool:
         """
-        Basic phone number validation for Ugandan numbers.
-        TextBee accepts formats: +256700000000, 256700000000, 0700000000
+        Basic phone number validation for Tanzanian numbers.
+        TextBee accepts formats: +255700000000, 255700000000, 0700000000
         """
         if not phone_number:
             return False
@@ -104,9 +104,9 @@ class TextBeeClient:
         cleaned = phone_number.replace(" ", "").replace("-", "")
         
         # Check common formats
-        if cleaned.startswith("+256") and len(cleaned) == 13:
+        if cleaned.startswith("+255") and len(cleaned) == 13:
             return True
-        if cleaned.startswith("256") and len(cleaned) == 12:
+        if cleaned.startswith("255") and len(cleaned) == 12:
             return True
         if cleaned.startswith("0") and len(cleaned) == 10:
             return True
@@ -115,15 +115,15 @@ class TextBeeClient:
     
     def normalize_phone_number(self, phone_number: str) -> str:
         """
-        Normalize phone number to international format (+256...).
+        Normalize phone number to international format (+255...).
         """
         cleaned = phone_number.replace(" ", "").replace("-", "")
         
-        if cleaned.startswith("+256"):
+        if cleaned.startswith("+255"):
             return cleaned
-        elif cleaned.startswith("256"):
+        elif cleaned.startswith("255"):
             return f"+{cleaned}"
         elif cleaned.startswith("0"):
-            return f"+256{cleaned[1:]}"
+            return f"+255{cleaned[1:]}"
         
         return phone_number  # Return as-is if unrecognized format

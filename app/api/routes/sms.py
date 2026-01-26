@@ -104,7 +104,7 @@ async def send_sms(
     db: Session = Depends(get_db)
 ):
     """
-    Send SMS immediately via TextBee gateway.
+    Send SMS immediately via TextBee gateway (Tanzania).
     Records delivery attempt in history.
     """
     service = SMSService(db)

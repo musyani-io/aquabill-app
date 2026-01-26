@@ -241,11 +241,11 @@ class SMSService:
     ) -> str:
         """
         Compose balance alert SMS.
-        Example: "Dear John, your water bill balance for Jan 2026 is UGX 45,000. Thank you."
+        Example: "Dear John, your water bill balance for Jan 2026 is TZS 45,000. Thank you."
         """
         return (
             f"Dear {client_name}, your water bill balance for {cycle_name} "
-            f"is UGX {balance:,.0f}. Thank you."
+            f"is TZS {balance:,.0f}. Thank you."
         )
     
     def compose_payment_confirmation(
@@ -256,11 +256,11 @@ class SMSService:
     ) -> str:
         """
         Compose payment confirmation SMS.
-        Example: "Dear John, we received your payment of UGX 20,000 (Ref: ABC123). Thank you."
+        Example: "Dear John, we received your payment of TZS 20,000 (Ref: ABC123). Thank you."
         """
         ref_part = f" (Ref: {reference})" if reference else ""
         return (
-            f"Dear {client_name}, we received your payment of UGX {amount:,.0f}{ref_part}. Thank you."
+            f"Dear {client_name}, we received your payment of TZS {amount:,.0f}{ref_part}. Thank you."
         )
     
     def compose_reading_reminder(
@@ -284,10 +284,10 @@ class SMSService:
     ) -> str:
         """
         Compose penalty notice SMS.
-        Example: "Dear John, a penalty of UGX 5,000 has been applied: Late payment. Thank you."
+        Example: "Dear John, a penalty of TZS 5,000 has been applied: Late payment. Thank you."
         """
         return (
-            f"Dear {client_name}, a penalty of UGX {amount:,.0f} has been applied: {reason}. Thank you."
+            f"Dear {client_name}, a penalty of TZS {amount:,.0f} has been applied: {reason}. Thank you."
         )
     
     def create_balance_alert_sms(
