@@ -3,21 +3,35 @@ Reading API routes - meter reading submission and approval endpoints.
 """
 from typing import List
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
-from app.schemas.reading import ReadingCreate, ReadingRead, ReadingApprove, ReadingUpdate
 from app.services.reading_service import ReadingService
+from app.schemas.reading import ReadingCreate, ReadingRead, ReadingApprove
 
 
+# Request schemas
 class SubmitReadingRequest(BaseModel):
-    """Reading submission with window checks"""
-    meter_assignment_id: int
-    cycle_id: int
-    absolute_value: Decimal = BaseModel.model_fields['absolute_value'].__class__(description="Meter reading in m³")
-    submitted_by: str
-    submission_notes: str = None
+    """Request body for submitting a meter reading"""
+    meter_assignment_id: int = Field(..., description="Meter assignment ID")
+    cycle_id: int = Field(..., description="Billing cycle ID")
+    absolute_value: Decimal = Field(..., ge=0, decimal_places=4, description="Meter reading in m³")
+    submitted_by: str = Field(..., min_length=1, max_length=100, description="User submitting reading")
+    submission_notes: str = Field(None, max_length=500, description="Optional notes about submission")
+
+
+class ApproveReadingRequest(BaseModel):
+    """Request body for approving a reading"""
+    approved_by: str = Field(..., min_length=1, max_length=100, description="Admin username")
+    approval_notes: str = Field(None, max_length=500, description="Notes about approval")
+    admin_consumption_override: Decimal = Field(None, description="Override calculated consumption (optional)")
+
+
+class RejectReadingRequest(BaseModel):
+    """Request body for rejecting a reading"""
+    rejected_by: str = Field(..., min_length=1, max_length=100, description="Admin username")
+    rejection_reason: str = Field(..., min_length=1, max_length=500, description="Reason for rejection")
 
 
 router = APIRouter(prefix="/readings", tags=["readings"])
@@ -35,7 +49,8 @@ def submit_reading(request: SubmitReadingRequest, db: Session = Depends(get_db))
     - Baseline reading must exist (created during meter assignment)
     - Detects late submissions and rollovers as anomalies
     
-    Errors:
+    Returns:
+    - 201: Reading created successfully
     - 400: Validation fails (closed cycle, missing baseline, late submission)
     - 404: Assignment or cycle not found
     """
@@ -54,9 +69,21 @@ def submit_reading(request: SubmitReadingRequest, db: Session = Depends(get_db))
     return reading
 
 
+@router.get("/pending", response_model=List[ReadingRead])
+def get_pending_readings(db: Session = Depends(get_db)):
+    """
+    Get all unapproved readings waiting for admin review.
+    
+    Returns:
+    - List of readings with is_approved=False, ready for approval/rejection
+    """
+    service = ReadingService(db)
+    return service.get_pending_readings()
+
+
 @router.get("/{reading_id}", response_model=ReadingRead)
 def get_reading(reading_id: int, db: Session = Depends(get_db)):
-    """Get reading by ID"""
+    """Get a specific reading by ID"""
     service = ReadingService(db)
     reading = service.get_reading(reading_id)
     
@@ -66,41 +93,29 @@ def get_reading(reading_id: int, db: Session = Depends(get_db)):
     return reading
 
 
-@router.get("/", response_model=List[ReadingRead])
-def list_readings(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
-):
-    """List all readings (newest first)"""
-    service = ReadingService(db)
-    return service.list_readings(skip, limit)
-
-
 @router.get("/assignment/{meter_assignment_id}", response_model=List[ReadingRead])
 def get_readings_by_assignment(meter_assignment_id: int, db: Session = Depends(get_db)):
-    """Get all readings for a meter assignment"""
+    """Get all readings for a specific meter assignment"""
     service = ReadingService(db)
     return service.get_readings_by_assignment(meter_assignment_id)
 
 
 @router.get("/cycle/{cycle_id}", response_model=List[ReadingRead])
 def get_readings_by_cycle(cycle_id: int, db: Session = Depends(get_db)):
-    """Get all readings for a cycle"""
+    """Get all readings submitted for a specific billing cycle"""
     service = ReadingService(db)
     return service.get_readings_by_cycle(cycle_id)
 
 
-@router.get("/pending", response_model=List[ReadingRead])
-def get_pending_readings(db: Session = Depends(get_db)):
-    """Get all unapproved readings waiting for admin review"""
-    service = ReadingService(db)
-    return service.get_pending_readings()
-
-
 @router.get("/{reading_id}/consumption")
 def get_consumption(reading_id: int, db: Session = Depends(get_db)):
-    """Calculate consumption for a reading (current - previous approved)"""
+    """
+    Calculate consumption for a reading (current - previous approved).
+    
+    Returns:
+    - consumption: m³ consumed in this period
+    - warning: "ROLLOVER" message if meter rolled over
+    """
     service = ReadingService(db)
     consumption, warning = service.calculate_consumption(reading_id)
     
@@ -114,64 +129,80 @@ def get_consumption(reading_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/", response_model=List[ReadingRead])
-def list_readings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """List all readings (newest first)"""
-    service = ReadingService(db)
-    return service.list_readings(skip=skip, limit=limit)
-
-
-@router.get("/assignment/{meter_assignment_id}", response_model=List[ReadingRead])
-def get_readings_by_assignment(
-    meter_assignment_id: int,
-    approved_only: bool = False,
-    db: Session = Depends(get_db)
-):
-    """Get readings for a meter assignment"""
-    service = ReadingService(db)
-    return service.list_readings_by_assignment(meter_assignment_id, approved_only)
-
-
-@router.get("/cycle/{cycle_id}", response_model=List[ReadingRead])
-def get_readings_by_cycle(
-    cycle_id: int,
-    approved_only: bool = False,
-    db: Session = Depends(get_db)
-):
-    """Get readings for a cycle"""
-    service = ReadingService(db)
-    return service.list_readings_by_cycle(cycle_id, approved_only)
-
-
-@router.get("/pending/unapproved", response_model=List[ReadingRead])
-def list_unapproved_readings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get unapproved readings for admin review"""
-    service = ReadingService(db)
-    return service.list_unapproved_readings(skip, limit)
-
-
-@router.post("/{reading_id}/approve", response_model=ReadingRead)
+@router.post("/{reading_id}/approve", response_model=ReadingRead, status_code=status.HTTP_200_OK)
 def approve_reading(
     reading_id: int,
-    approve_data: ReadingApprove,
+    approved_by: str = Query(..., description="Admin username"),
+    approval_notes: str = Query(None, description="Notes about approval"),
+    admin_consumption_override: Decimal = Query(None, description="Override calculated consumption (optional)"),
     db: Session = Depends(get_db)
 ):
     """
     Approve a reading and calculate consumption.
     
-    Logic:
-    - BASELINE: no consumption, no charges
-    - NORMAL: consumption = current_value - previous_reading_value
-    - Rollover: detected if result is negative
+    WORKFLOW:
+    1. Validate reading not already approved
+    2. BASELINE readings: no consumption, no charges generated
+    3. NORMAL readings: consumption = current_value - previous_reading_value
+    4. Rollover detection: if negative, flag for admin
+    5. Admin can override consumption if needed
+    
+    Returns approved reading with consumption calculated.
     """
     service = ReadingService(db)
     reading, error = service.approve_reading(
         reading_id=reading_id,
-        approved_by=approve_data.approved_by,
-        approval_notes=approve_data.approval_notes
+        approved_by=approved_by,
+        approval_notes=approval_notes,
+        admin_consumption_override=admin_consumption_override
     )
     
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     
     return reading
+
+
+@router.post("/{reading_id}/reject", status_code=status.HTTP_200_OK)
+def reject_reading(
+    reading_id: int,
+    rejected_by: str = Query(..., description="Admin username"),
+    rejection_reason: str = Query(..., description="Reason for rejection"),
+    db: Session = Depends(get_db)
+):
+    """
+    Reject a submitted reading (admin action).
+    
+    Allows user to submit a corrected reading.
+    
+    Returns:
+    - status: "rejected"
+    - notes: Rejection reason stored for audit trail
+    """
+    service = ReadingService(db)
+    reading, error = service.reject_reading(
+        reading_id=reading_id,
+        rejected_by=rejected_by,
+        rejection_reason=rejection_reason
+    )
+    
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    return {
+        "id": reading.id,
+        "status": "rejected",
+        "notes": reading.notes,
+        "message": f"Reading {reading_id} rejected. User can submit corrected reading."
+    }
+
+
+@router.get("/", response_model=List[ReadingRead])
+def list_all_readings(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db)
+):
+    """List all readings with pagination (newest first)"""
+    service = ReadingService(db)
+    return service.list_readings(skip=skip, limit=limit)

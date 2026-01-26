@@ -99,7 +99,7 @@ class ReadingService:
             meter_assignment_id=meter_assignment_id,
             cycle_id=cycle_id,
             absolute_value=absolute_value,
-            reading_type=ReadingType.NORMAL,
+            type=ReadingType.NORMAL,
             submitted_by=submitted_by,
             submission_notes=submission_notes
         )
@@ -123,14 +123,14 @@ class ReadingService:
             # Get previous approved reading
             prev_reading = self.repository.get_latest_approved(meter_assignment_id, exclude_id=reading.id)
             
-            if prev_reading and Decimal(absolute_value) < Decimal(prev_reading.reading_value):
+            if prev_reading and Decimal(absolute_value) < Decimal(prev_reading.absolute_value):
                 # Meter rolled over (reading decreased)
                 anomaly = self.anomaly_repository.create(
                     meter_assignment_id=meter_assignment_id,
                     cycle_id=cycle_id,
                     reading_id=reading.id,
                     anomaly_type=AnomalyType.ROLLOVER_WITHOUT_LIMIT,
-                    description=f"Meter reading decreased from {prev_reading.reading_value} to {absolute_value}. Possible rollover."
+                    description=f"Meter reading decreased from {prev_reading.absolute_value} to {absolute_value}. Possible rollover."
                 )
                 anomalies.append(anomaly)
         
@@ -163,12 +163,21 @@ class ReadingService:
         """
         Calculate consumption = current reading - previous approved reading.
         
+        SPEC: Consumption is the amount of water used in this billing period.
+        - BASELINE readings: consumption = None (initial reading, no usage yet)
+        - NORMAL readings: consumption = current - previous approved
+        - Rollover: if negative, flag with has_rollover=True
+        
         Returns:
-            (consumption in m³, error_message)
+            (consumption in m³, error/warning message)
         """
         reading = self.repository.get(reading_id)
         if not reading:
             return None, f"Reading {reading_id} not found"
+        
+        # Baseline readings have no consumption
+        if reading.type == ReadingType.BASELINE.value:
+            return Decimal(0), None
         
         # Get previous approved reading
         prev_reading = self.repository.get_latest_approved(
@@ -177,34 +186,34 @@ class ReadingService:
         )
         
         if not prev_reading:
-            return None, "No previous approved reading found"
+            return None, "No previous approved reading found for consumption calculation"
         
         consumption = Decimal(reading.reading_value) - Decimal(prev_reading.reading_value)
         
         if consumption < 0:
-            return consumption, "WARNING: Negative consumption (rollover detected)"
+            return consumption, "ROLLOVER: Meter reading decreased - possible meter reset/rollover"
         
         return consumption, None
-        
-        
-        return reading, None
     
     def approve_reading(
         self,
         reading_id: int,
         approved_by: str,
-        approval_notes: Optional[str] = None
+        approval_notes: Optional[str] = None,
+        admin_consumption_override: Optional[Decimal] = None
     ) -> Tuple[Optional[Reading], Optional[str]]:
         """
         Approve a reading and calculate consumption.
         
-        Logic:
-        - BASELINE readings: consumption = NULL, no charges generated
-        - NORMAL readings: consumption = absolute_value - previous_reading.absolute_value
-        - Rollover detection: if consumption would be negative, set has_rollover = True
+        WORKFLOW:
+        1. Validate reading exists and not already approved
+        2. For BASELINE: no consumption, no charges
+        3. For NORMAL: calculate consumption from previous reading
+        4. If rollover: flag for manual resolution
+        5. Admin can override consumption if needed
         
         Returns:
-            (Reading, None) if successful
+            (approved Reading, None) if successful
             (None, error_message) if validation fails
         """
         reading = self.repository.get(reading_id)
@@ -214,62 +223,80 @@ class ReadingService:
         if reading.approved:
             return None, f"Reading {reading_id} is already approved"
         
-        # BASELINE readings generate no consumption
+        # ============ BASELINE readings ============
         if reading.type == ReadingType.BASELINE.value:
             approved = self.repository.approve(
                 reading_id=reading_id,
                 approved_by=approved_by,
                 consumption=None,
                 has_rollover=False,
-                approval_notes=approval_notes
+                approval_notes=f"Baseline approved (no consumption). {approval_notes or ''}"
             )
             return approved, None
         
-        # NORMAL readings: calculate consumption from previous reading
-        previous = self.repository.get_previous_reading(reading.meter_assignment_id)
+        # ============ NORMAL readings ============
+        # Calculate consumption from previous reading
+        prev_reading = self.repository.get_latest_approved(
+            reading.meter_assignment_id,
+            exclude_id=reading.id
+        )
         
-        if not previous:
-            # No previous normal reading (shouldn't happen if baseline exists)
-            return None, f"No previous baseline reading found for meter assignment {reading.meter_assignment_id}"
+        if not prev_reading:
+            return None, f"No previous approved reading for meter assignment {reading.meter_assignment_id}"
         
-        # Calculate consumption
-        consumption = reading.absolute_value - previous.absolute_value
+        # Calculate raw consumption
+        raw_consumption = Decimal(reading.absolute_value) - Decimal(prev_reading.absolute_value)
         has_rollover = False
+        final_consumption = raw_consumption
         
-        if consumption < 0:
-            # Meter has rolled over (reset)
+        # ============ Rollover handling ============
+        if raw_consumption < 0:
+            # Meter has rolled over (reading decreased)
+            # Admin must specify max meter value to calculate true consumption
+            # For now, record as-is with rollover flag
             has_rollover = True
-            # Rollover consumption = (max_meter_value - previous) + current_value
-            # For now, we record as-is and flag for admin review
-            # In a real system, admin would specify meter max value
+            final_consumption = raw_consumption  # Keep negative to flag anomaly
         
-        # Approve reading with calculated consumption
+        # ============ Allow admin override ============
+        if admin_consumption_override is not None:
+            final_consumption = admin_consumption_override
+            has_rollover = False  # Admin has resolved any rollover
+        
+        # ============ Approve with consumption ============
         approved = self.repository.approve(
             reading_id=reading_id,
             approved_by=approved_by,
-            consumption=abs(consumption) if has_rollover else consumption,  # Absolute for rollover
+            consumption=final_consumption,
             has_rollover=has_rollover,
-            approval_notes=approval_notes
+            approval_notes=approval_notes or ""
         )
         
         return approved, None
     
-    def get_reading(self, reading_id: int) -> Optional[Reading]:
-        """Get reading by ID"""
-        return self.repository.get(reading_id)
-    
-    def list_readings(self, skip: int = 0, limit: int = 100) -> List[Reading]:
-        """List all readings"""
-        return self.repository.list(skip, limit)
-    
-    def list_readings_by_assignment(self, meter_assignment_id: int, approved_only: bool = False) -> List[Reading]:
-        """Get readings for a specific meter assignment"""
-        return self.repository.list_by_assignment(meter_assignment_id, approved_only)
-    
-    def list_readings_by_cycle(self, cycle_id: int, approved_only: bool = False) -> List[Reading]:
-        """Get readings for a specific cycle"""
-        return self.repository.list_by_cycle(cycle_id, approved_only)
-    
-    def list_unapproved_readings(self, skip: int = 0, limit: int = 100) -> List[Reading]:
-        """Get unapproved readings for admin review"""
-        return self.repository.list_unapproved(skip, limit)
+    def reject_reading(
+        self,
+        reading_id: int,
+        rejected_by: str,
+        rejection_reason: str
+    ) -> Tuple[Optional[Reading], Optional[str]]:
+        """
+        Reject a submitted reading (admin action).
+        
+        Allows the user to submit a corrected reading.
+        """
+        reading = self.repository.get(reading_id)
+        if not reading:
+            return None, f"Reading {reading_id} not found"
+        
+        if reading.is_approved:
+            return None, f"Cannot reject already approved reading {reading_id}"
+        
+        # Mark as rejected (soft delete via rejection_reason field)
+        # In real system, might have is_rejected flag
+        # For now, store rejection reason in notes
+        reading.notes = f"REJECTED by {rejected_by}: {rejection_reason}"
+        self.db.add(reading)
+        self.db.commit()
+        self.db.refresh(reading)
+        
+        return reading, None
