@@ -10,6 +10,8 @@ from app.api.routes.anomaly_conflict import router as anomaly_conflict_router
 from app.api.routes.billing import router as billing_router
 from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.sms import router as sms_router
+from app.api.routes.exports import router as exports_router
+from app.api.routes.archive import router as archive_router
 
 app = FastAPI(title="AquaBill API", version="0.1.0")
 
@@ -34,3 +36,5 @@ app.include_router(anomaly_conflict_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(audit_logs_router, prefix="/api/v1")
 app.include_router(sms_router, prefix="/api/v1/sms", tags=["sms"])
+app.include_router(exports_router, prefix="/api/v1")
+app.include_router(archive_router, prefix="/api/v1")
