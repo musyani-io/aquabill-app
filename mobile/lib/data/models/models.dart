@@ -309,7 +309,9 @@ class ConflictModel {
         cycleId: map['cycle_id'] as int,
         localValue: (map['local_value'] as num).toDouble(),
         serverValue: (map['server_value'] as num).toDouble(),
-        resolved: (map['resolved'] as int) == 1,
+        resolved: map['resolved'] is bool
+            ? map['resolved'] as bool
+            : (map['resolved'] as int) == 1,
         resolvedAt: map['resolved_at'] != null
             ? DateTime.parse(map['resolved_at'] as String)
             : null,
