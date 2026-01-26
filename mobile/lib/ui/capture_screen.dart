@@ -79,10 +79,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
     });
 
     final assignments = await _assignmentDao.getByClient(client.id);
-    final active = assignments.firstWhere(
-      (a) => a.isActive,
-      orElse: () => assignments.isNotEmpty ? assignments.first : null,
-    );
+    MeterAssignmentModel? active;
+    try {
+      active = assignments.firstWhere((a) => a.isActive);
+    } catch (_) {
+      active = assignments.isNotEmpty ? assignments.first : null;
+    }
 
     if (active == null) {
       if (mounted) {

@@ -4,6 +4,7 @@ import '../core/connectivity.dart';
 import '../core/device_id.dart';
 import '../core/error_handler.dart';
 import '../core/token_storage.dart';
+import '../domain/sync/background_sync_service.dart';
 import '../data/local/daos/client_dao.dart';
 import '../data/local/daos/conflict_dao.dart';
 import '../data/local/daos/cycle_dao.dart';
@@ -32,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _pendingCount = 0;
   DateTime? _lastSync;
   String _deviceId = 'Loading...';
+  bool _backgroundSyncEnabled = false;
 
   final SyncQueueDao _syncQueueDao = SyncQueueDao();
   final AppDatabase _db = AppDatabase();
@@ -47,11 +49,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final pending = await _syncQueueDao.pendingCount();
     final lastSyncStr = await _db.getMetadata('last_sync');
     final deviceId = await DeviceIdHelper().getDeviceId();
+    final bgSyncEnabled = await BackgroundSyncService().isEnabled();
     setState(() {
       _tokenController.text = token ?? '';
       _pendingCount = pending;
       _lastSync = lastSyncStr != null ? DateTime.parse(lastSyncStr) : null;
       _deviceId = deviceId;
+      _backgroundSyncEnabled = bgSyncEnabled;
       _loading = false;
     });
   }
@@ -225,6 +229,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       label: Text(_syncing ? 'Syncing...' : 'Sync now'),
                       onPressed: _syncing ? null : _runSync,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Background sync'),
+                    subtitle: const Text(
+                      'Automatically sync when online (every 30 min)',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    value: _backgroundSyncEnabled,
+                    onChanged: (value) async {
+                      if (value) {
+                        await BackgroundSyncService().enable();
+                      } else {
+                        await BackgroundSyncService().disable();
+                      }
+                      setState(() => _backgroundSyncEnabled = value);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              value
+                                  ? 'Background sync enabled'
+                                  : 'Background sync disabled',
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),

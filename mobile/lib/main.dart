@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
 import 'data/local/daos/sync_queue_dao.dart';
+import 'domain/sync/background_sync_service.dart';
 import 'ui/capture_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/settings_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize background sync service
+  await BackgroundSyncService().initialize();
+
   runApp(const AquaBillApp());
 }
 

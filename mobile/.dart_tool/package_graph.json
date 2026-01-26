@@ -17,6 +17,7 @@
         "getwidget",
         "http",
         "intl",
+        "json_annotation",
         "json_serializable",
         "logger",
         "path",
@@ -199,6 +200,13 @@
     {
       "name": "logger",
       "version": "2.6.2",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "json_annotation",
+      "version": "4.9.0",
       "dependencies": [
         "meta"
       ]
@@ -415,13 +423,6 @@
       "version": "2.2.0",
       "dependencies": [
         "collection"
-      ]
-    },
-    {
-      "name": "json_annotation",
-      "version": "4.9.0",
-      "dependencies": [
-        "meta"
       ]
     },
     {
