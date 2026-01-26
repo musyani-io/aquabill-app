@@ -205,7 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Text('Last sync:'),
                       Text(
                         _lastSync != null
-                            ? '${_lastSync!.toLocal().toString().split('.')[0]}'
+                            ? _lastSync!.toLocal().toString().split('.')[0]
                             : 'Never',
                         style: const TextStyle(fontSize: 12),
                       ),
