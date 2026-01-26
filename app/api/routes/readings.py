@@ -1,10 +1,3 @@
-
-
-class VerifyRolloverRequest(BaseModel):
-    """Request body for verifying a rollover reading"""
-    max_meter_value: Decimal = Field(..., gt=0, decimal_places=4, description="Meter's max value (e.g., 999999.9999)")
-    verified_by: str = Field(..., min_length=1, max_length=100, description="Admin username verifying rollover")
-    verification_notes: str = Field(None, max_length=500, description="Notes about rollover verification")
 """
 Reading API routes - meter reading submission and approval endpoints.
 """
@@ -39,6 +32,13 @@ class RejectReadingRequest(BaseModel):
     """Request body for rejecting a reading"""
     rejected_by: str = Field(..., min_length=1, max_length=100, description="Admin username")
     rejection_reason: str = Field(..., min_length=1, max_length=500, description="Reason for rejection")
+
+
+class VerifyRolloverRequest(BaseModel):
+    """Request body for verifying a rollover reading"""
+    max_meter_value: Decimal = Field(..., gt=0, decimal_places=4, description="Meter's max value (e.g., 999999.9999)")
+    verified_by: str = Field(..., min_length=1, max_length=100, description="Admin username verifying rollover")
+    verification_notes: str = Field(None, max_length=500, description="Notes about rollover verification")
 
 
 router = APIRouter(prefix="/readings", tags=["readings"])
