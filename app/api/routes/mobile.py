@@ -4,7 +4,7 @@ Mobile API routes - bootstrap, incremental updates, and mobile reading submissio
 
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -16,14 +16,20 @@ from app.schemas.mobile import (
     MobileReadingResponse,
     MobileConflictDetail,
 )
+from app.core.mobile_auth import require_mobile_auth
 
 router = APIRouter(prefix="/mobile", tags=["mobile"])
 
 
 @router.get("/bootstrap", response_model=MobileBootstrapResponse)
-def get_bootstrap(db: Session = Depends(get_db)):
+def get_bootstrap(
+    collector_id: str = Depends(require_mobile_auth),
+    db: Session = Depends(get_db),
+):
     """
     Bootstrap endpoint for mobile app initial sync.
+
+    Requires: Authorization: Bearer <token>
 
     Returns:
     - Last 12 billing cycles
@@ -43,12 +49,15 @@ def get_updates(
     since: datetime = Query(
         ...,
         description="Last sync timestamp (ISO8601). Returns changes since this time.",
-        example="2026-01-20T10:30:00Z",
+        examples=["2026-01-20T10:30:00Z"],
     ),
+    collector_id: str = Depends(require_mobile_auth),
     db: Session = Depends(get_db),
 ):
     """
     Incremental updates endpoint for efficient mobile sync.
+
+    Requires: Authorization: Bearer <token>
 
     Returns only entities modified since the provided timestamp:
     - Updated assignments, cycles, readings (approved only)
@@ -71,10 +80,13 @@ def get_updates(
 )
 def submit_mobile_reading(
     payload: MobileReadingSubmit,
+    collector_id: str = Depends(require_mobile_auth),
     db: Session = Depends(get_db),
 ):
     """
     Submit a meter reading from mobile app with extended metadata.
+
+    Requires: Authorization: Bearer <token>
 
     Accepts:
     - All standard reading fields (meter_assignment_id, cycle_id, absolute_value)
@@ -140,12 +152,15 @@ def resolve_mobile_conflict(
     resolution: str = Query(
         ...,
         description="Resolution action: 'accept_server' or 'resubmit'",
-        regex="^(accept_server|resubmit)$",
+        pattern="^(accept_server|resubmit)$",
     ),
+    collector_id: str = Depends(require_mobile_auth),
     db: Session = Depends(get_db),
 ):
     """
     Resolve a mobile reading conflict (optional endpoint).
+
+    Requires: Authorization: Bearer <token>
 
     Actions:
     - accept_server: Discard local reading, accept server version

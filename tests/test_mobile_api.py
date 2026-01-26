@@ -133,7 +133,8 @@ def sample_data():
 
 def test_bootstrap_endpoint(sample_data):
     """Test bootstrap returns last 12 cycles + active assignments"""
-    response = client.get("/api/v1/mobile/bootstrap")
+    headers = {"Authorization": "Bearer test-collector-123"}
+    response = client.get("/api/v1/mobile/bootstrap", headers=headers)
 
     assert response.status_code == 200
     data = response.json()
@@ -165,7 +166,8 @@ def test_bootstrap_endpoint(sample_data):
 def test_updates_endpoint(sample_data):
     """Test incremental updates endpoint"""
     # Get initial bootstrap timestamp
-    bootstrap_response = client.get("/api/v1/mobile/bootstrap")
+    headers = {"Authorization": "Bearer test-collector-123"}
+    bootstrap_response = client.get("/api/v1/mobile/bootstrap", headers=headers)
     last_sync = bootstrap_response.json()["last_sync"]
 
     # Parse and subtract a small amount to ensure new reading is captured
@@ -195,7 +197,7 @@ def test_updates_endpoint(sample_data):
 
     # Get updates since bootstrap (use slightly earlier timestamp)
     since_param = dt.fromisoformat(last_sync.replace('Z', '+00:00')) - timedelta(seconds=1)
-    response = client.get(f"/api/v1/mobile/updates?since={since_param.isoformat()}")
+    response = client.get(f"/api/v1/mobile/updates?since={since_param.isoformat()}", headers=headers)
 
     assert response.status_code == 200
     data = response.json()
@@ -208,6 +210,7 @@ def test_updates_endpoint(sample_data):
 
 def test_mobile_reading_submission(sample_data):
     """Test mobile reading submission endpoint"""
+    headers = {"Authorization": "Bearer test-collector-123"}
     payload = {
         "meter_assignment_id": 1,
         "cycle_id": 3,
@@ -222,7 +225,7 @@ def test_mobile_reading_submission(sample_data):
         "submission_notes": "Test reading from mobile",
     }
 
-    response = client.post("/api/v1/mobile/readings", json=payload)
+    response = client.post("/api/v1/mobile/readings", json=payload, headers=headers)
 
     # Debug output
     if response.status_code != 201:
@@ -241,6 +244,7 @@ def test_mobile_reading_submission(sample_data):
 def test_mobile_reading_conflict(sample_data):
     """Test conflict detection on duplicate submission"""
     # First submission
+    headers = {"Authorization": "Bearer test-collector-123"}
     payload = {
         "meter_assignment_id": 1,
         "cycle_id": 3,
@@ -251,13 +255,13 @@ def test_mobile_reading_conflict(sample_data):
         "previous_approved_reading": 1500.0,
     }
 
-    response1 = client.post("/api/v1/mobile/readings", json=payload)
+    response1 = client.post("/api/v1/mobile/readings", json=payload, headers=headers)
     assert response1.status_code == 201
 
     # Duplicate submission with different value should trigger conflict
     payload["absolute_value"] = 2100.0
     payload["submitted_by"] = "another_collector"  # Different collector
-    response2 = client.post("/api/v1/mobile/readings", json=payload)
+    response2 = client.post("/api/v1/mobile/readings", json=payload, headers=headers)
 
     # Should return 409 or 400 depending on validation
     # (current implementation returns 400 for duplicate; we'd enhance to 409)
