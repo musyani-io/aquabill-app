@@ -4,3 +4,4 @@ imp_stuffs
 # Virtual environments
 .venv
 *venv
+*__pycache__
