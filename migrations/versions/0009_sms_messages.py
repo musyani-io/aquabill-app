@@ -19,9 +19,23 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Create SMS message tables with retry logic"""
     
-    # Create SMS status enum
-    op.execute("CREATE TYPE smsstatus AS ENUM ('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'BOUNCED')")
-    op.execute("CREATE TYPE smsdeliverystatus AS ENUM ('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'RETRY_SCHEDULED')")
+    # Drop enums if they already exist (safe in dev environments, cascade removes dependent columns if any)
+    op.execute("DROP TYPE IF EXISTS smsstatus CASCADE")
+    op.execute("DROP TYPE IF EXISTS smsdeliverystatus CASCADE")
+    
+    # Ensure enums exist (idempotent)
+    op.execute(
+        """
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'smsstatus') THEN
+                CREATE TYPE smsstatus AS ENUM ('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'BOUNCED');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'smsdeliverystatus') THEN
+                CREATE TYPE smsdeliverystatus AS ENUM ('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'RETRY_SCHEDULED');
+            END IF;
+        END$$;
+        """
+    )
     
     # Create sms_messages table
     op.create_table(
@@ -34,7 +48,7 @@ def upgrade() -> None:
         sa.Column('client_id', sa.Integer(), nullable=False),
         sa.Column('meter_assignment_id', sa.Integer(), nullable=True),
         sa.Column('cycle_id', sa.Integer(), nullable=True),
-        sa.Column('status', sa.Enum('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'BOUNCED', name='smsstatus'), nullable=False, server_default='PENDING'),
+        sa.Column('status', sa.String(length=20), nullable=False, server_default='PENDING'),
         sa.Column('retry_count', sa.Integer(), nullable=False, server_default='0'),
         sa.Column('max_retries', sa.Integer(), nullable=False, server_default='3'),
         sa.Column('last_attempt_at', sa.DateTime(), nullable=True),
@@ -67,7 +81,7 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('sms_message_id', sa.Integer(), nullable=False),
         sa.Column('attempt_number', sa.Integer(), nullable=False),
-        sa.Column('status', sa.Enum('PENDING', 'SENT', 'DELIVERED', 'FAILED', 'RETRY_SCHEDULED', name='smsdeliverystatus'), nullable=False, server_default='PENDING'),
+        sa.Column('status', sa.String(length=25), nullable=False, server_default='PENDING'),
         sa.Column('gateway_name', sa.String(length=50), nullable=True),
         sa.Column('gateway_request', sa.Text(), nullable=True),
         sa.Column('gateway_response', sa.Text(), nullable=True),

@@ -70,7 +70,7 @@ class SMSMessage(Base):
     
     # Metadata
     error_reason = Column(Text, nullable=True)  # Why it failed
-    metadata = Column(Text, nullable=True)  # JSON with additional context
+    metadata_json = Column("metadata", Text, nullable=True)  # JSON with additional context (rename attr to avoid reserved name)
     
     # Relationships
     client = relationship("Client", backref="sms_messages")
