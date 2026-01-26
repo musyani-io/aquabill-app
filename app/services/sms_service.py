@@ -263,19 +263,6 @@ class SMSService:
             f"Dear {client_name}, we received your payment of TZS {amount:,.0f}{ref_part}. Thank you."
         )
     
-    def compose_reading_reminder(
-        self,
-        client_name: str,
-        deadline_date: str
-    ) -> str:
-        """
-        Compose reading submission reminder SMS.
-        Example: "Dear John, please submit your water meter reading by 31 Jan 2026. Thank you."
-        """
-        return (
-            f"Dear {client_name}, please submit your water meter reading by {deadline_date}. Thank you."
-        )
-    
     def compose_penalty_notice(
         self,
         client_name: str,
