@@ -4,7 +4,7 @@ Flutter-based offline-first mobile app for water meter reading collection in Tan
 
 ## Project Structure
 
-```
+```bash
 lib/
 ├── data/
 │   ├── local/          # SQLite database & DAOs

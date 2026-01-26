@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../data/local/daos/conflict_dao.dart';
 import '../data/local/daos/client_dao.dart';
 import '../data/local/daos/meter_assignment_dao.dart';
-import '../data/local/daos/reading_dao.dart';
 import '../data/models/models.dart';
 
 /// Conflicts UI: list conflicts and allow simple resolution actions.
@@ -18,7 +17,6 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
   final ConflictDao _conflictDao = ConflictDao();
   final ClientDao _clientDao = ClientDao();
   final MeterAssignmentDao _assignmentDao = MeterAssignmentDao();
-  final ReadingDao _readingDao = ReadingDao();
 
   List<ConflictModel> _conflicts = [];
   bool _loading = true;
@@ -107,8 +105,8 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
                     Row(
                       children: [
                         CircleAvatar(
-                          child: Text('${conflict.id}'),
                           radius: 16,
+                          child: Text('${conflict.id}'),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

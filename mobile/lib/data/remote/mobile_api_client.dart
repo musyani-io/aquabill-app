@@ -36,7 +36,6 @@ class MobileApiClient {
       return _mapBootstrap(data);
     } on DioException catch (e) {
       _handleDioError(e);
-      rethrow;
     }
   }
 
@@ -51,7 +50,6 @@ class MobileApiClient {
       return _mapUpdates(data);
     } on DioException catch (e) {
       _handleDioError(e);
-      rethrow;
     }
   }
 
@@ -100,7 +98,6 @@ class MobileApiClient {
         );
       }
       _handleDioError(e);
-      rethrow;
     }
   }
 
