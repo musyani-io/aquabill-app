@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'core/auth_service.dart';
 import 'data/local/daos/sync_queue_dao.dart';
 import 'domain/sync/background_sync_service.dart';
 import 'ui/capture_screen.dart';
 import 'ui/conflicts_screen.dart';
+import 'ui/login_screen.dart';
 import 'ui/settings_screen.dart';
 
 void main() async {
@@ -26,8 +28,52 @@ class AquaBillApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const AuthWrapper(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomePage(),
+      },
     );
+  }
+}
+
+/// Wrapper to check authentication state
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _isLoading = true;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final isLoggedIn = await AuthService().isLoggedIn();
+    setState(() {
+      _isLoggedIn = isLoggedIn;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return _isLoggedIn ? const HomePage() : const LoginScreen();
   }
 }
 

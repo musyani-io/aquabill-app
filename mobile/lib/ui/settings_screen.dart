@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/auth_service.dart';
 import '../core/connectivity.dart';
 import '../core/device_id.dart';
 import '../core/error_handler.dart';
@@ -34,6 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   DateTime? _lastSync;
   String _deviceId = 'Loading...';
   bool _backgroundSyncEnabled = false;
+  String _username = 'User';
+  UserRole? _userRole;
 
   final SyncQueueDao _syncQueueDao = SyncQueueDao();
   final AppDatabase _db = AppDatabase();
@@ -50,12 +53,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final lastSyncStr = await _db.getMetadata('last_sync');
     final deviceId = await DeviceIdHelper().getDeviceId();
     final bgSyncEnabled = await BackgroundSyncService().isEnabled();
+    final username = await AuthService().getUsername();
+    final userRole = await AuthService().getUserRole();
     setState(() {
       _tokenController.text = token ?? '';
       _pendingCount = pending;
       _lastSync = lastSyncStr != null ? DateTime.parse(lastSyncStr) : null;
       _deviceId = deviceId;
       _backgroundSyncEnabled = bgSyncEnabled;
+      _username = username ?? 'User';
+      _userRole = userRole;
       _loading = false;
     });
   }
@@ -274,6 +281,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(
               _deviceId,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Account',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: _userRole == UserRole.admin
+                            ? Colors.orange
+                            : Colors.blue,
+                        child: Icon(
+                          _userRole == UserRole.admin
+                              ? Icons.admin_panel_settings
+                              : Icons.person,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _username,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              _userRole == UserRole.admin ? 'Admin' : 'Collector',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Logout'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Logout'),
+                            content: const Text(
+                              'Are you sure you want to logout?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Logout'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true && mounted) {
+                          await AuthService().logout();
+                          if (mounted) {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/login',
+                              (route) => false,
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
