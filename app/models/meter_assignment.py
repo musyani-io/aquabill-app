@@ -34,3 +34,9 @@ class MeterAssignment(Base):
     # Relationships
     meter = relationship("Meter", backref="assignments")
     client = relationship("Client", backref="meter_assignments")
+    readings = relationship("Reading", back_populates="meter_assignment", cascade="all, delete-orphan")
+    anomalies = relationship("Anomaly", back_populates="meter_assignment", cascade="all, delete-orphan")
+    conflicts = relationship("Conflict", back_populates="meter_assignment", cascade="all, delete-orphan")
+    ledger_entries = relationship("LedgerEntry", back_populates="meter_assignment", cascade="all, delete-orphan")
+    penalties = relationship("Penalty", back_populates="meter_assignment", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="meter_assignment", cascade="all, delete-orphan")

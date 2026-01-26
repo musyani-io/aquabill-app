@@ -47,6 +47,10 @@ class Cycle(Base):
     
     # Relationships
     readings = relationship("Reading", back_populates="cycle", cascade="all, delete-orphan")
+    anomalies = relationship("Anomaly", back_populates="cycle", cascade="all, delete-orphan")
+    conflicts = relationship("Conflict", back_populates="cycle", cascade="all, delete-orphan")
+    ledger_entries = relationship("LedgerEntry", back_populates="cycle", cascade="all, delete-orphan")
+    penalties = relationship("Penalty", back_populates="cycle", cascade="all, delete-orphan")
     
     __table_args__ = (
         CheckConstraint("start_date < end_date", name="ck_cycle_dates_valid"),
