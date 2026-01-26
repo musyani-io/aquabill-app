@@ -10,8 +10,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = '0007'
-down_revision: Union[str, None] = '0006'
+revision: str = '0007_ledger_payments_penalties'
+down_revision: Union[str, None] = '0006_anomalies_conflicts'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
