@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/connectivity.dart';
+import '../core/device_id.dart';
 import '../core/error_handler.dart';
 import '../core/token_storage.dart';
 import '../data/local/daos/client_dao.dart';
@@ -26,11 +27,11 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _tokenController = TextEditingController();
-  bool _wifiOnly = false;
   bool _loading = true;
   bool _syncing = false;
   int _pendingCount = 0;
   DateTime? _lastSync;
+  String _deviceId = 'Loading...';
 
   final SyncQueueDao _syncQueueDao = SyncQueueDao();
   final AppDatabase _db = AppDatabase();
@@ -45,10 +46,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final token = await TokenStorage().getToken();
     final pending = await _syncQueueDao.pendingCount();
     final lastSyncStr = await _db.getMetadata('last_sync');
+    final deviceId = await DeviceIdHelper().getDeviceId();
     setState(() {
       _tokenController.text = token ?? '';
       _pendingCount = pending;
       _lastSync = lastSyncStr != null ? DateTime.parse(lastSyncStr) : null;
+      _deviceId = deviceId;
       _loading = false;
     });
   }
@@ -227,23 +230,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          SwitchListTile(
-            title: const Text('Sync on Wi-Fi only'),
-            value: _wifiOnly,
-            onChanged: (value) {
-              setState(() => _wifiOnly = value);
-              // In future: persist preference
-            },
-          ),
           const SizedBox(height: 16),
           const Text(
             'Device',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const ListTile(
+          ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Device ID'),
-            subtitle: Text('<to be set>'),
+            title: const Text('Device ID'),
+            subtitle: Text(
+              _deviceId,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
           ),
         ],
       ),

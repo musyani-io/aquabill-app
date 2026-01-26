@@ -39,6 +39,9 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.0.0
 
+  # Device info
+  device_info_plus: ^9.0.0
+
   # Background tasks
   workmanager: ^0.5.0
 

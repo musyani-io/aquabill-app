@@ -20,4 +20,13 @@ class TokenStorage {
   Future<void> clearToken() async {
     await _storage.delete(key: _tokenKey);
   }
+
+  // Generic storage helpers
+  Future<void> saveCustom(String key, String value) async {
+    await _storage.write(key: key, value: value);
+  }
+
+  Future<String?> getCustom(String key) async {
+    return _storage.read(key: key);
+  }
 }
