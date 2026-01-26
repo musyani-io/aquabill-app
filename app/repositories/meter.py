@@ -22,7 +22,13 @@ class MeterRepository:
         return self.db.query(Meter).filter(Meter.serial_number == serial_number).first()
 
     def list(self, skip: int = 0, limit: int = 50) -> list[Meter]:
-        return self.db.query(Meter).order_by(Meter.serial_number).offset(skip).limit(limit).all()
+        return (
+            self.db.query(Meter)
+            .order_by(Meter.serial_number)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def update(self, meter: Meter, data: MeterUpdate) -> Meter:
         for field, value in data.model_dump(exclude_unset=True).items():

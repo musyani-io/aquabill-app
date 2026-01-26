@@ -20,7 +20,9 @@ def get_meter(meter_id: int, db: Session = Depends(get_db)):
     service = MeterService(db)
     meter = service.get(meter_id)
     if meter is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meter not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Meter not found"
+        )
     return meter
 
 
@@ -39,7 +41,9 @@ def update_meter(meter_id: int, payload: MeterUpdate, db: Session = Depends(get_
     service = MeterService(db)
     meter = service.update(meter_id, payload)
     if meter is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meter not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Meter not found"
+        )
     return meter
 
 
@@ -48,5 +52,7 @@ def delete_meter(meter_id: int, db: Session = Depends(get_db)):
     service = MeterService(db)
     deleted = service.delete(meter_id)
     if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meter not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Meter not found"
+        )
     return None

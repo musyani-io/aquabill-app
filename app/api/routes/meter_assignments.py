@@ -4,12 +4,17 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
-from app.schemas.meter_assignment import MeterAssignmentCreate, MeterAssignmentRead, MeterAssignmentUpdate
+from app.schemas.meter_assignment import (
+    MeterAssignmentCreate,
+    MeterAssignmentRead,
+    MeterAssignmentUpdate,
+)
 from app.services.meter_assignment_service import MeterAssignmentService
 
 
 class AssignMeterRequest(BaseModel):
     """Request to assign meter with baseline"""
+
     meter_id: int
     client_id: int
     start_date: date
@@ -19,14 +24,13 @@ class AssignMeterRequest(BaseModel):
 router = APIRouter(prefix="/meter-assignments", tags=["meter-assignments"])
 
 
-@router.post("/assign", response_model=MeterAssignmentRead, status_code=status.HTTP_201_CREATED)
-def assign_meter_to_client(
-    payload: AssignMeterRequest,
-    db: Session = Depends(get_db)
-):
+@router.post(
+    "/assign", response_model=MeterAssignmentRead, status_code=status.HTTP_201_CREATED
+)
+def assign_meter_to_client(payload: AssignMeterRequest, db: Session = Depends(get_db)):
     """
     Assign a meter to a client with baseline reading.
-    
+
     CRITICAL: This creates both the assignment and baseline reading.
     No normal readings can be submitted until baseline is set.
     """
@@ -35,7 +39,7 @@ def assign_meter_to_client(
         meter_id=payload.meter_id,
         client_id=payload.client_id,
         start_date=payload.start_date,
-        baseline_reading=payload.baseline_reading
+        baseline_reading=payload.baseline_reading,
     )
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -47,7 +51,9 @@ def get_assignment(assignment_id: int, db: Session = Depends(get_db)):
     service = MeterAssignmentService(db)
     assignment = service.get(assignment_id)
     if assignment is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
+        )
     return assignment
 
 
@@ -57,13 +63,15 @@ def get_baseline_reading(assignment_id: int, db: Session = Depends(get_db)):
     service = MeterAssignmentService(db)
     baseline = service.get_baseline_for_assignment(assignment_id)
     if baseline is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No baseline reading found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No baseline reading found"
+        )
     return {
         "id": baseline.id,
         "reading_type": baseline.reading_type,
         "reading_value": baseline.reading_value,
         "is_approved": baseline.is_approved,
-        "approved_at": baseline.approved_at
+        "approved_at": baseline.approved_at,
     }
 
 
@@ -94,14 +102,20 @@ def close_assignment(assignment_id: int, end_date: date, db: Session = Depends(g
     service = MeterAssignmentService(db)
     assignment = service.close_assignment(assignment_id, end_date)
     if assignment is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
+        )
     return assignment
 
 
 @router.patch("/{assignment_id}", response_model=MeterAssignmentRead)
-def update_assignment(assignment_id: int, payload: MeterAssignmentUpdate, db: Session = Depends(get_db)):
+def update_assignment(
+    assignment_id: int, payload: MeterAssignmentUpdate, db: Session = Depends(get_db)
+):
     service = MeterAssignmentService(db)
     assignment = service.update(assignment_id, payload)
     if assignment is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
+        )
     return assignment

@@ -25,12 +25,24 @@ def upgrade() -> None:
         sa.Column("surname", sa.String(length=100), nullable=False),
         sa.Column("phone_number", sa.String(length=20), nullable=False),
         sa.Column("client_code", sa.String(length=50), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.UniqueConstraint("phone_number", name="uq_clients_phone_number"),
         sa.UniqueConstraint("client_code", name="uq_clients_client_code"),
     )
-    op.create_index("ix_clients_name", "clients", ["first_name", "surname"], unique=False)
+    op.create_index(
+        "ix_clients_name", "clients", ["first_name", "surname"], unique=False
+    )
 
 
 def downgrade() -> None:

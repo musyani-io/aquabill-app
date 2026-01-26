@@ -1,6 +1,7 @@
 """
 Penalty service - business logic for manual penalties.
 """
+
 from decimal import Decimal
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -94,7 +95,10 @@ class PenaltyService:
             return None, f"Penalty {penalty_id} not found"
 
         if penalty.status != PenaltyStatus.APPLIED.value:
-            return None, f"Penalty {penalty_id} is not APPLIED (status={penalty.status})"
+            return (
+                None,
+                f"Penalty {penalty_id} is not APPLIED (status={penalty.status})",
+            )
 
         ledger_repo = LedgerEntryRepository(self.db)
 
@@ -107,7 +111,9 @@ class PenaltyService:
             meter_assignment_id=penalty.meter_assignment_id,
             cycle_id=penalty.cycle_id,
             entry_type=LedgerEntryType.PENALTY,
-            amount=Decimal(str(penalty.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            amount=Decimal(str(penalty.amount)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            ),
             is_credit=False,  # penalty is a debit
             description=f"{penalty.reason} (penalty_id={penalty_id})",
             created_by=created_by,

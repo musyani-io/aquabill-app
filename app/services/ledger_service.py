@@ -1,6 +1,7 @@
 """
 Ledger service - business logic for ledger entries.
 """
+
 from decimal import Decimal
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -119,5 +120,5 @@ class LedgerService:
                 "payments": float(payments),
                 "adjustments_debit": float(adjustments_debit),
                 "adjustments_credit": float(adjustments_credit),
-            }
+            },
         }, None

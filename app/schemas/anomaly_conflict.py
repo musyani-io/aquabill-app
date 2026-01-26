@@ -1,6 +1,7 @@
 """
 Anomaly and Conflict schemas for API request/response validation.
 """
+
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -12,8 +13,10 @@ from app.models.conflict import ConflictType, ConflictStatus, ConflictSeverity
 # ANOMALY SCHEMAS
 # ============================================================================
 
+
 class AnomalyBase(BaseModel):
     """Base anomaly attributes"""
+
     anomaly_type: AnomalyType
     description: str = Field(min_length=1, max_length=500)
     severity: str = Field(default="INFO")  # INFO, WARNING, CRITICAL
@@ -21,6 +24,7 @@ class AnomalyBase(BaseModel):
 
 class AnomalyCreate(AnomalyBase):
     """Schema for creating an anomaly"""
+
     meter_assignment_id: int
     cycle_id: int
     reading_id: Optional[int] = None
@@ -28,17 +32,20 @@ class AnomalyCreate(AnomalyBase):
 
 class AnomalyAcknowledge(BaseModel):
     """Schema for acknowledging an anomaly"""
+
     acknowledged_by: str = Field(min_length=1, max_length=100)
 
 
 class AnomalyResolve(BaseModel):
     """Schema for resolving an anomaly"""
+
     resolved_by: str = Field(min_length=1, max_length=100)
     resolution_notes: Optional[str] = Field(None, max_length=500)
 
 
 class AnomalyRead(AnomalyBase):
     """Schema for reading anomaly data"""
+
     id: int
     meter_assignment_id: int
     cycle_id: int
@@ -51,7 +58,7 @@ class AnomalyRead(AnomalyBase):
     resolved_by: Optional[str] = None
     resolution_notes: Optional[str] = None
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -60,8 +67,10 @@ class AnomalyRead(AnomalyBase):
 # CONFLICT SCHEMAS
 # ============================================================================
 
+
 class ConflictBase(BaseModel):
     """Base conflict attributes"""
+
     conflict_type: ConflictType
     description: str = Field(min_length=1, max_length=500)
     severity: ConflictSeverity = ConflictSeverity.MEDIUM
@@ -69,6 +78,7 @@ class ConflictBase(BaseModel):
 
 class ConflictCreate(ConflictBase):
     """Schema for creating a conflict"""
+
     meter_assignment_id: int
     cycle_id: Optional[int] = None
     reading_id: Optional[int] = None
@@ -76,17 +86,22 @@ class ConflictCreate(ConflictBase):
 
 class ConflictAssign(BaseModel):
     """Schema for assigning a conflict to admin"""
-    assigned_to: str = Field(min_length=1, max_length=100, description="Admin email or ID")
+
+    assigned_to: str = Field(
+        min_length=1, max_length=100, description="Admin email or ID"
+    )
 
 
 class ConflictResolve(BaseModel):
     """Schema for resolving a conflict"""
+
     resolved_by: str = Field(min_length=1, max_length=100)
     resolution_notes: Optional[str] = Field(None, max_length=500)
 
 
 class ConflictRead(ConflictBase):
     """Schema for reading conflict data"""
+
     id: int
     meter_assignment_id: int
     cycle_id: Optional[int] = None
@@ -99,6 +114,6 @@ class ConflictRead(ConflictBase):
     resolved_by: Optional[str] = None
     resolution_notes: Optional[str] = None
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True

@@ -1,6 +1,7 @@
 """
 Payment service - business logic for payments.
 """
+
 from decimal import Decimal
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -88,11 +89,14 @@ class PaymentService:
         ledger_repo = LedgerEntryRepository(self.db)
 
         # Get all charges (debits) for this assignment ordered FIFO
-        charges = ledger_repo.get_unpaid_charges_by_assignment(payment.meter_assignment_id)
+        charges = ledger_repo.get_unpaid_charges_by_assignment(
+            payment.meter_assignment_id
+        )
 
         # Get all existing payments (credits) for this assignment
         existing_payments = [
-            e for e in ledger_repo.list_by_assignment(payment.meter_assignment_id)
+            e
+            for e in ledger_repo.list_by_assignment(payment.meter_assignment_id)
             if e.entry_type == LedgerEntryType.PAYMENT.value and e.is_credit
         ]
 
@@ -126,4 +130,8 @@ class PaymentService:
         # If payment exceeds charges, remaining is credit balance
         credit_balance = remaining_payment
 
-        return created_entries, None if remaining_payment == 0 else f"Credit balance remaining: {credit_balance}"
+        return created_entries, (
+            None
+            if remaining_payment == 0
+            else f"Credit balance remaining: {credit_balance}"
+        )

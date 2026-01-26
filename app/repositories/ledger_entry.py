@@ -1,6 +1,7 @@
 """
 Ledger entry repository - data access for financial ledger.
 """
+
 from typing import List, Optional
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -41,7 +42,13 @@ class LedgerEntryRepository:
         return self.db.query(LedgerEntry).filter(LedgerEntry.id == entry_id).first()
 
     def list(self, skip: int = 0, limit: int = 100) -> List[LedgerEntry]:
-        return self.db.query(LedgerEntry).order_by(desc(LedgerEntry.created_at)).offset(skip).limit(limit).all()
+        return (
+            self.db.query(LedgerEntry)
+            .order_by(desc(LedgerEntry.created_at))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def list_by_assignment(self, meter_assignment_id: int) -> List[LedgerEntry]:
         return (
@@ -59,39 +66,45 @@ class LedgerEntryRepository:
             .all()
         )
 
-    def get_charge_for_assignment_cycle(self, meter_assignment_id: int, cycle_id: int) -> Optional[LedgerEntry]:
+    def get_charge_for_assignment_cycle(
+        self, meter_assignment_id: int, cycle_id: int
+    ) -> Optional[LedgerEntry]:
         """Return existing CHARGE entry for assignment+cycle if any (idempotency)."""
         return (
             self.db.query(LedgerEntry)
             .filter(
                 LedgerEntry.meter_assignment_id == meter_assignment_id,
                 LedgerEntry.cycle_id == cycle_id,
-                LedgerEntry.entry_type == LedgerEntryType.CHARGE.value
+                LedgerEntry.entry_type == LedgerEntryType.CHARGE.value,
             )
             .first()
         )
 
-    def get_unpaid_charges_by_assignment(self, meter_assignment_id: int) -> List[LedgerEntry]:
+    def get_unpaid_charges_by_assignment(
+        self, meter_assignment_id: int
+    ) -> List[LedgerEntry]:
         """Get all CHARGE entries (debits) for an assignment, ordered by created_at (FIFO)."""
         return (
             self.db.query(LedgerEntry)
             .filter(
                 LedgerEntry.meter_assignment_id == meter_assignment_id,
                 LedgerEntry.entry_type == LedgerEntryType.CHARGE.value,
-                LedgerEntry.is_credit == False
+                LedgerEntry.is_credit == False,
             )
             .order_by(LedgerEntry.created_at.asc())
             .all()
         )
 
-    def get_applied_penalties_by_assignment(self, meter_assignment_id: int) -> List[LedgerEntry]:
+    def get_applied_penalties_by_assignment(
+        self, meter_assignment_id: int
+    ) -> List[LedgerEntry]:
         """Get all PENALTY entries (debits) for an assignment."""
         return (
             self.db.query(LedgerEntry)
             .filter(
                 LedgerEntry.meter_assignment_id == meter_assignment_id,
                 LedgerEntry.entry_type == LedgerEntryType.PENALTY.value,
-                LedgerEntry.is_credit == False
+                LedgerEntry.is_credit == False,
             )
             .order_by(LedgerEntry.created_at.asc())
             .all()
@@ -103,7 +116,7 @@ class LedgerEntryRepository:
             self.db.query(LedgerEntry)
             .filter(
                 LedgerEntry.entry_type == LedgerEntryType.PENALTY.value,
-                LedgerEntry.description.like(f"%penalty_id={penalty_id}%")
+                LedgerEntry.description.like(f"%penalty_id={penalty_id}%"),
             )
             .first()
         )

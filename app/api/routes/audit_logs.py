@@ -1,4 +1,5 @@
 """Audit log API routes - read-only endpoints"""
+
 from typing import List
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
@@ -14,7 +15,7 @@ router = APIRouter()
 def get_audit_logs(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Max records to return"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get all audit logs with pagination.
@@ -25,10 +26,7 @@ def get_audit_logs(
 
 
 @router.get("/{audit_log_id}", response_model=AuditLogResponse)
-def get_audit_log(
-    audit_log_id: int,
-    db: Session = Depends(get_db)
-):
+def get_audit_log(audit_log_id: int, db: Session = Depends(get_db)):
     """Get specific audit log by ID"""
     service = AuditLogService(db)
     audit_log = service.get_audit_log(audit_log_id)
@@ -42,7 +40,7 @@ def get_logs_by_admin(
     admin_username: str,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get all audit logs for specific admin user"""
     service = AuditLogService(db)
@@ -54,7 +52,7 @@ def get_logs_by_action(
     action: AuditAction,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get all audit logs for specific action type"""
     service = AuditLogService(db)
@@ -67,7 +65,7 @@ def get_logs_by_entity(
     entity_id: int,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get all audit logs for specific entity.

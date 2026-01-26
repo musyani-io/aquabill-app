@@ -1,6 +1,7 @@
 """
 Billing API routes - ledger entries, payments, and penalties.
 """
+
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -26,7 +27,10 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 # Ledger endpoints
 # ---------------------------------------------------------------------------
 
-@router.post("/ledger", response_model=LedgerEntryRead, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/ledger", response_model=LedgerEntryRead, status_code=status.HTTP_201_CREATED
+)
 def create_ledger_entry(entry_data: LedgerEntryCreate, db: Session = Depends(get_db)):
     service = LedgerService(db)
     entry, error = service.create_entry(
@@ -48,7 +52,10 @@ def get_ledger_entry(entry_id: int, db: Session = Depends(get_db)):
     service = LedgerService(db)
     entry = service.get_entry(entry_id)
     if not entry:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Ledger entry {entry_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ledger entry {entry_id} not found",
+        )
     return entry
 
 
@@ -72,7 +79,10 @@ def list_ledger_entries(
 # Payment endpoints
 # ---------------------------------------------------------------------------
 
-@router.post("/payments", response_model=PaymentRead, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/payments", response_model=PaymentRead, status_code=status.HTTP_201_CREATED
+)
 def create_payment(payment_data: PaymentCreate, db: Session = Depends(get_db)):
     service = PaymentService(db)
     payment, error = service.create_payment(
@@ -94,7 +104,10 @@ def get_payment(payment_id: int, db: Session = Depends(get_db)):
     service = PaymentService(db)
     payment = service.get_payment(payment_id)
     if not payment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Payment {payment_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Payment {payment_id} not found",
+        )
     return payment
 
 
@@ -104,8 +117,12 @@ def list_payments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     return service.list_payments(skip, limit)
 
 
-@router.get("/payments/assignment/{meter_assignment_id}", response_model=List[PaymentRead])
-def list_payments_by_assignment(meter_assignment_id: int, db: Session = Depends(get_db)):
+@router.get(
+    "/payments/assignment/{meter_assignment_id}", response_model=List[PaymentRead]
+)
+def list_payments_by_assignment(
+    meter_assignment_id: int, db: Session = Depends(get_db)
+):
     service = PaymentService(db)
     return service.list_payments_by_assignment(meter_assignment_id)
 
@@ -120,7 +137,10 @@ def list_payments_by_client(client_id: int, db: Session = Depends(get_db)):
 # Penalty endpoints
 # ---------------------------------------------------------------------------
 
-@router.post("/penalties", response_model=PenaltyRead, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/penalties", response_model=PenaltyRead, status_code=status.HTTP_201_CREATED
+)
 def create_penalty(penalty_data: PenaltyCreate, db: Session = Depends(get_db)):
     service = PenaltyService(db)
     penalty, error = service.create_penalty(
@@ -141,7 +161,10 @@ def get_penalty(penalty_id: int, db: Session = Depends(get_db)):
     service = PenaltyService(db)
     penalty = service.get_penalty(penalty_id)
     if not penalty:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Penalty {penalty_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Penalty {penalty_id} not found",
+        )
     return penalty
 
 
@@ -151,8 +174,12 @@ def list_penalties(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     return service.list_penalties(skip, limit)
 
 
-@router.get("/penalties/assignment/{meter_assignment_id}", response_model=List[PenaltyRead])
-def list_penalties_by_assignment(meter_assignment_id: int, db: Session = Depends(get_db)):
+@router.get(
+    "/penalties/assignment/{meter_assignment_id}", response_model=List[PenaltyRead]
+)
+def list_penalties_by_assignment(
+    meter_assignment_id: int, db: Session = Depends(get_db)
+):
     service = PenaltyService(db)
     return service.list_penalties_by_assignment(meter_assignment_id)
 
@@ -167,7 +194,9 @@ def waive_penalty(penalty_id: int, waiver: PenaltyWaive, db: Session = Depends(g
 
 
 @router.post("/penalties/{penalty_id}/apply", response_model=LedgerEntryRead)
-def apply_penalty_to_ledger(penalty_id: int, created_by: str, db: Session = Depends(get_db)):
+def apply_penalty_to_ledger(
+    penalty_id: int, created_by: str, db: Session = Depends(get_db)
+):
     """
     Apply a penalty to the ledger as a PENALTY entry.
     Idempotent: will not create duplicate entries.
@@ -180,19 +209,21 @@ def apply_penalty_to_ledger(penalty_id: int, created_by: str, db: Session = Depe
 
 
 @router.post("/payments/{payment_id}/allocate")
-def allocate_payment_fifo(payment_id: int, recorded_by: str, db: Session = Depends(get_db)):
+def allocate_payment_fifo(
+    payment_id: int, recorded_by: str, db: Session = Depends(get_db)
+):
     """
     Allocate payment to oldest unpaid charges using FIFO.
     Creates PAYMENT ledger entries tied to charges.
     """
     service = PaymentService(db)
     entries, message = service.allocate_payment_fifo(payment_id, recorded_by)
-    
+
     return {
         "payment_id": payment_id,
         "allocated_count": len(entries),
         "ledger_entry_ids": [e.id for e in entries],
-        "message": message or "Payment fully allocated"
+        "message": message or "Payment fully allocated",
     }
 
 

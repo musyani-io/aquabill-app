@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 # Ensure app imports work
-sys.path.append('.')
+sys.path.append(".")
 
 from app.core.config import settings  # noqa: E402
 from app.db.base import Base  # noqa: E402

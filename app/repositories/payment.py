@@ -1,6 +1,7 @@
 """
 Payment repository - data access for payments.
 """
+
 from typing import List, Optional
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
@@ -43,7 +44,13 @@ class PaymentRepository:
         return self.db.query(Payment).filter(Payment.id == payment_id).first()
 
     def list(self, skip: int = 0, limit: int = 100) -> List[Payment]:
-        return self.db.query(Payment).order_by(desc(Payment.received_at)).offset(skip).limit(limit).all()
+        return (
+            self.db.query(Payment)
+            .order_by(desc(Payment.received_at))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def list_by_client(self, client_id: int) -> List[Payment]:
         return (

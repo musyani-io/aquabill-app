@@ -14,7 +14,7 @@ class MeterAssignmentRepository:
             meter_id=data.meter_id,
             client_id=data.client_id,
             start_date=data.start_date,
-            status=AssignmentStatus.ACTIVE
+            status=AssignmentStatus.ACTIVE,
         )
         self.db.add(obj)
         self.db.commit()
@@ -29,7 +29,7 @@ class MeterAssignmentRepository:
             self.db.query(MeterAssignment)
             .filter(
                 MeterAssignment.meter_id == meter_id,
-                MeterAssignment.status == AssignmentStatus.ACTIVE
+                MeterAssignment.status == AssignmentStatus.ACTIVE,
             )
             .first()
         )
@@ -51,7 +51,9 @@ class MeterAssignmentRepository:
             .all()
         )
 
-    def close_assignment(self, assignment: MeterAssignment, end_date: date) -> MeterAssignment:
+    def close_assignment(
+        self, assignment: MeterAssignment, end_date: date
+    ) -> MeterAssignment:
         assignment.end_date = end_date
         assignment.status = AssignmentStatus.INACTIVE
         self.db.add(assignment)
@@ -59,7 +61,9 @@ class MeterAssignmentRepository:
         self.db.refresh(assignment)
         return assignment
 
-    def update(self, assignment: MeterAssignment, data: MeterAssignmentUpdate) -> MeterAssignment:
+    def update(
+        self, assignment: MeterAssignment, data: MeterAssignmentUpdate
+    ) -> MeterAssignment:
         for field, value in data.model_dump(exclude_unset=True).items():
             if field == "status" and value:
                 value = AssignmentStatus[value]

@@ -21,8 +21,18 @@ def upgrade() -> None:
         "meters",
         sa.Column("id", sa.Integer(), primary_key=True, nullable=False),
         sa.Column("serial_number", sa.String(length=50), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.UniqueConstraint("serial_number", name="uq_meters_serial_number"),
     )
     op.create_index("ix_meters_id", "meters", ["id"], unique=False)

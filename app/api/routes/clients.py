@@ -20,7 +20,9 @@ def get_client(client_id: int, db: Session = Depends(get_db)):
     service = ClientService(db)
     client = service.get(client_id)
     if client is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Client not found"
+        )
     return client
 
 
@@ -39,7 +41,9 @@ def update_client(client_id: int, payload: ClientUpdate, db: Session = Depends(g
     service = ClientService(db)
     client = service.update(client_id, payload)
     if client is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Client not found"
+        )
     return client
 
 
@@ -48,5 +52,7 @@ def delete_client(client_id: int, db: Session = Depends(get_db)):
     service = ClientService(db)
     deleted = service.delete(client_id)
     if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Client not found"
+        )
     return None

@@ -1,6 +1,7 @@
 """
 Export API routes - generate CSV reports for cycles, ledgers, and payments.
 """
+
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -23,7 +24,9 @@ def export_cycle_readings(cycle_id: int, db: Session = Depends(get_db)):
         return Response(
             content=csv_data,
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=cycle_{cycle_id}_readings.csv"}
+            headers={
+                "Content-Disposition": f"attachment; filename=cycle_{cycle_id}_readings.csv"
+            },
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -41,7 +44,9 @@ def export_cycle_charges(cycle_id: int, db: Session = Depends(get_db)):
         return Response(
             content=csv_data,
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=cycle_{cycle_id}_charges.csv"}
+            headers={
+                "Content-Disposition": f"attachment; filename=cycle_{cycle_id}_charges.csv"
+            },
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -52,7 +57,7 @@ def export_annual_ledger(year: int, db: Session = Depends(get_db)):
     """
     Export all ledger entries for a year to CSV.
     Annual financial report for compliance and auditing.
-    
+
     Example: GET /exports/annual-ledger/2026
     """
     service = ExportService(db)
@@ -61,7 +66,7 @@ def export_annual_ledger(year: int, db: Session = Depends(get_db)):
         return Response(
             content=csv_data,
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=ledger_{year}.csv"}
+            headers={"Content-Disposition": f"attachment; filename=ledger_{year}.csv"},
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -71,33 +76,33 @@ def export_annual_ledger(year: int, db: Session = Depends(get_db)):
 def export_payments(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Export all payments within date range to CSV.
-    
+
     Query params:
     - start_date: YYYY-MM-DD (optional)
     - end_date: YYYY-MM-DD (optional)
-    
+
     Example: GET /exports/payments?start_date=2026-01-01&end_date=2026-01-31
     """
     service = ExportService(db)
-    
+
     # Parse dates
     start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
     end_dt = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
-    
+
     csv_data = service.export_payments_csv(start_dt, end_dt)
-    
+
     filename = "payments"
     if start_date and end_date:
         filename = f"payments_{start_date}_to_{end_date}"
-    
+
     return Response(
         content=csv_data,
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}.csv"}
+        headers={"Content-Disposition": f"attachment; filename={filename}.csv"},
     )
 
 
@@ -109,10 +114,12 @@ def export_client_balances(db: Session = Depends(get_db)):
     """
     service = ExportService(db)
     csv_data = service.export_client_balances_csv()
-    
+
     timestamp = datetime.now().strftime("%Y%m%d")
     return Response(
         content=csv_data,
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=client_balances_{timestamp}.csv"}
+        headers={
+            "Content-Disposition": f"attachment; filename=client_balances_{timestamp}.csv"
+        },
     )
