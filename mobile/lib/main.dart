@@ -16,7 +16,7 @@ void main() async {
 }
 
 class AquaBillApp extends StatelessWidget {
-  const AquaBillApp({Key? key}) : super(key: key);
+  const AquaBillApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class AquaBillApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -49,11 +49,7 @@ class _HomePageState extends State<HomePage> {
     SettingsScreen(),
   ];
 
-  final List<String> _titles = const [
-    'Capture',
-    'Conflicts',
-    'Settings',
-  ];
+  final List<String> _titles = const ['Capture', 'Conflicts', 'Settings'];
 
   @override
   void initState() {

@@ -11,16 +11,17 @@ class MobileApiClient {
     Dio? dio,
     required this.baseUrl,
     Future<String?> Function()? tokenProvider,
-  })  : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: baseUrl,
-                connectTimeout: const Duration(seconds: 15),
-                receiveTimeout: const Duration(seconds: 20),
-                responseType: ResponseType.json,
-              ),
-            ),
-        _tokenProvider = tokenProvider;
+  }) : _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: baseUrl,
+               connectTimeout: const Duration(seconds: 15),
+               receiveTimeout: const Duration(seconds: 20),
+               responseType: ResponseType.json,
+             ),
+           ),
+       _tokenProvider = tokenProvider;
 
   final Dio _dio;
   final String baseUrl;
@@ -107,8 +108,10 @@ class MobileApiClient {
     return BootstrapPayload(
       clients: _mapList(data['clients'], ClientModel.fromLocalMap),
       meters: _mapList(data['meters'], MeterModel.fromLocalMap),
-      assignments:
-          _mapList(data['assignments'], MeterAssignmentModel.fromLocalMap),
+      assignments: _mapList(
+        data['assignments'],
+        MeterAssignmentModel.fromLocalMap,
+      ),
       cycles: _mapList(data['cycles'], CycleModel.fromLocalMap),
       readings: _mapList(data['readings'], ReadingModel.fromLocalMap),
       lastSync: DateTime.parse(data['last_sync'] as String),
@@ -119,8 +122,10 @@ class MobileApiClient {
     return UpdatesPayload(
       clients: _mapList(data['clients'], ClientModel.fromLocalMap),
       meters: _mapList(data['meters'], MeterModel.fromLocalMap),
-      assignments:
-          _mapList(data['assignments'], MeterAssignmentModel.fromLocalMap),
+      assignments: _mapList(
+        data['assignments'],
+        MeterAssignmentModel.fromLocalMap,
+      ),
       cycles: _mapList(data['cycles'], CycleModel.fromLocalMap),
       readings: _mapList(data['readings'], ReadingModel.fromLocalMap),
       tombstones: _mapList(data['tombstones'], TombstoneModel.fromJson),
@@ -143,7 +148,7 @@ class MobileApiClient {
       'Content-Type': 'application/json',
     };
     if (_tokenProvider != null) {
-      final token = await _tokenProvider!.call();
+      final token = await _tokenProvider.call();
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -157,18 +162,30 @@ class MobileApiClient {
 
     if (status == 401 || status == 403) {
       throw NetworkException(
-          message: 'Unauthorized', code: '$status', originalError: e);
+        message: 'Unauthorized',
+        code: '$status',
+        originalError: e,
+      );
     }
     if (status != null && status >= 500) {
       throw NetworkException(
-          message: 'Server error ($status)', code: '$status', originalError: e);
+        message: 'Server error ($status)',
+        code: '$status',
+        originalError: e,
+      );
     }
     if (status == 400) {
       throw ValidationException(
-          message: 'Validation error', code: '$status', originalError: e);
+        message: 'Validation error',
+        code: '$status',
+        originalError: e,
+      );
     }
 
     throw NetworkException(
-        message: message, code: status?.toString(), originalError: e);
+      message: message,
+      code: status?.toString(),
+      originalError: e,
+    );
   }
 }

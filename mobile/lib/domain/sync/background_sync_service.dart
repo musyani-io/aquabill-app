@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:workmanager/workmanager.dart';
 
 import '../../core/connectivity.dart';
@@ -82,6 +84,10 @@ class BackgroundSyncService {
 
   /// Initialize background sync
   Future<void> initialize() async {
+    // Workmanager is only supported on Android and iOS
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return;
+    }
     await Workmanager().initialize(
       backgroundSyncDispatcher,
       isInDebugMode: false,
@@ -90,19 +96,24 @@ class BackgroundSyncService {
 
   /// Schedule periodic background sync (every 30 minutes)
   Future<void> schedulePeriodicSync() async {
+    // Workmanager is only supported on Android and iOS
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return;
+    }
     await Workmanager().registerPeriodicTask(
       syncTaskName,
       syncTaskName,
       frequency: const Duration(minutes: 30),
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-      ),
-      existingWorkPolicy: ExistingWorkPolicy.keep,
+      constraints: Constraints(networkType: NetworkType.connected),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
 
-  /// Cancel background sync
   Future<void> cancelSync() async {
+    // Workmanager is only supported on Android and iOS
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return;
+    }
     await Workmanager().cancelByUniqueName(syncTaskName);
   }
 

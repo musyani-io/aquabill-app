@@ -1,4 +1,5 @@
 /// Connectivity monitoring for offline/online detection.
+library;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -13,7 +14,7 @@ class ConnectivityService {
 
   final Connectivity _connectivity = Connectivity();
 
-  Stream<ConnectivityResult> get onConnectivityChanged {
+  Stream<List<ConnectivityResult>> get onConnectivityChanged {
     return _connectivity.onConnectivityChanged;
   }
 
