@@ -1,5 +1,6 @@
 """Core application configuration."""
 
+from typing import Optional
 from pydantic_settings import BaseSettings
 
 
@@ -26,7 +27,12 @@ class Settings(BaseSettings):
     jwt_expiration_hours: int = 24
     
     # SMS
-    sms_provider: str = "mock"
+    sms_provider: str = "mock"  # options: mock, twilio, textbee
+    twilio_account_sid: Optional[str] = None
+    twilio_auth_token: Optional[str] = None
+    textbee_api_key: Optional[str] = None
+    textbee_base_url: Optional[str] = None  # e.g., https://api.textbee.io/sms/send
+    textbee_sender_id: Optional[str] = None
     
     class Config:
         env_file = ".env"

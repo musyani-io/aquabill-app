@@ -3,6 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1 import api_router
+
 app = FastAPI(
     title="AquaBill API",
     description="Water meter reading and billing management system",
@@ -17,6 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API v1 routes
+app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/health")
 def health_check():
