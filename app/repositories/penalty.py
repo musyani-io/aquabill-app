@@ -50,6 +50,18 @@ class PenaltyRepository:
             .all()
         )
 
+    def list_applied_by_assignment(self, meter_assignment_id: int) -> List[Penalty]:
+        """Get only APPLIED (not waived) penalties for an assignment."""
+        return (
+            self.db.query(Penalty)
+            .filter(
+                Penalty.meter_assignment_id == meter_assignment_id,
+                Penalty.status == PenaltyStatus.APPLIED.value
+            )
+            .order_by(desc(Penalty.imposed_at))
+            .all()
+        )
+
     def waive(self, penalty_id: int, waived_by: str, notes: Optional[str] = None) -> Optional[Penalty]:
         penalty = self.get(penalty_id)
         if penalty:

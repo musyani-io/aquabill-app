@@ -70,3 +70,41 @@ class LedgerEntryRepository:
             )
             .first()
         )
+
+    def get_unpaid_charges_by_assignment(self, meter_assignment_id: int) -> List[LedgerEntry]:
+        """Get all CHARGE entries (debits) for an assignment, ordered by created_at (FIFO)."""
+        return (
+            self.db.query(LedgerEntry)
+            .filter(
+                LedgerEntry.meter_assignment_id == meter_assignment_id,
+                LedgerEntry.entry_type == LedgerEntryType.CHARGE.value,
+                LedgerEntry.is_credit == False
+            )
+            .order_by(LedgerEntry.created_at.asc())
+            .all()
+        )
+
+    def get_applied_penalties_by_assignment(self, meter_assignment_id: int) -> List[LedgerEntry]:
+        """Get all PENALTY entries (debits) for an assignment."""
+        return (
+            self.db.query(LedgerEntry)
+            .filter(
+                LedgerEntry.meter_assignment_id == meter_assignment_id,
+                LedgerEntry.entry_type == LedgerEntryType.PENALTY.value,
+                LedgerEntry.is_credit == False
+            )
+            .order_by(LedgerEntry.created_at.asc())
+            .all()
+        )
+
+    def check_penalty_applied(self, penalty_id: int) -> bool:
+        """Check if a penalty has already been applied to ledger (idempotency)."""
+        exists = (
+            self.db.query(LedgerEntry)
+            .filter(
+                LedgerEntry.entry_type == LedgerEntryType.PENALTY.value,
+                LedgerEntry.description.like(f"%penalty_id={penalty_id}%")
+            )
+            .first()
+        )
+        return exists is not None

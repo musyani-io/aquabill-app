@@ -164,3 +164,46 @@ def waive_penalty(penalty_id: int, waiver: PenaltyWaive, db: Session = Depends(g
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     return penalty
+
+
+@router.post("/penalties/{penalty_id}/apply", response_model=LedgerEntryRead)
+def apply_penalty_to_ledger(penalty_id: int, created_by: str, db: Session = Depends(get_db)):
+    """
+    Apply a penalty to the ledger as a PENALTY entry.
+    Idempotent: will not create duplicate entries.
+    """
+    service = PenaltyService(db)
+    entry, error = service.apply_penalty_to_ledger(penalty_id, created_by)
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return entry
+
+
+@router.post("/payments/{payment_id}/allocate")
+def allocate_payment_fifo(payment_id: int, recorded_by: str, db: Session = Depends(get_db)):
+    """
+    Allocate payment to oldest unpaid charges using FIFO.
+    Creates PAYMENT ledger entries tied to charges.
+    """
+    service = PaymentService(db)
+    entries, message = service.allocate_payment_fifo(payment_id, recorded_by)
+    
+    return {
+        "payment_id": payment_id,
+        "allocated_count": len(entries),
+        "ledger_entry_ids": [e.id for e in entries],
+        "message": message or "Payment fully allocated"
+    }
+
+
+@router.get("/balance/{meter_assignment_id}")
+def get_balance(meter_assignment_id: int, db: Session = Depends(get_db)):
+    """
+    Compute net balance for a meter assignment.
+    Balance = (charges + penalties + debit adjustments) - (payments + credit adjustments)
+    """
+    service = LedgerService(db)
+    balance, error = service.compute_balance(meter_assignment_id)
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return balance

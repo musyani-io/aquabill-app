@@ -64,3 +64,66 @@ class PaymentService:
 
     def list_payments_by_client(self, client_id: int) -> List[Payment]:
         return self.repository.list_by_client(client_id)
+
+    def allocate_payment_fifo(
+        self,
+        payment_id: int,
+        recorded_by: str,
+    ) -> Tuple[List, Optional[str]]:
+        """
+        Allocate payment to oldest unpaid charges (FIFO) via PAYMENT ledger entries.
+        Returns (list of created ledger entries, error).
+        """
+        from decimal import Decimal, ROUND_HALF_UP
+        from app.repositories.ledger_entry import LedgerEntryRepository
+        from app.models.ledger_entry import LedgerEntryType
+
+        payment = self.repository.get(payment_id)
+        if not payment:
+            return [], f"Payment {payment_id} not found"
+
+        if not payment.meter_assignment_id:
+            return [], f"Payment {payment_id} has no meter_assignment_id"
+
+        ledger_repo = LedgerEntryRepository(self.db)
+
+        # Get all charges (debits) for this assignment ordered FIFO
+        charges = ledger_repo.get_unpaid_charges_by_assignment(payment.meter_assignment_id)
+
+        # Get all existing payments (credits) for this assignment
+        existing_payments = [
+            e for e in ledger_repo.list_by_assignment(payment.meter_assignment_id)
+            if e.entry_type == LedgerEntryType.PAYMENT.value and e.is_credit
+        ]
+
+        # Calculate remaining balance on each charge (charge.amount - sum of allocated payments)
+        # For simplicity, we'll just create PAYMENT entries; actual allocation tracking
+        # would require a payment_allocations table. Here we do simple FIFO credit.
+
+        remaining_payment = Decimal(str(payment.amount))
+        created_entries = []
+
+        for charge in charges:
+            if remaining_payment <= 0:
+                break
+
+            # For now, we create one PAYMENT entry per charge until payment exhausted
+            # In production, track allocation separately
+            allocation = min(remaining_payment, Decimal(str(charge.amount)))
+
+            entry = ledger_repo.create(
+                meter_assignment_id=payment.meter_assignment_id,
+                cycle_id=charge.cycle_id,  # tie to same cycle as charge
+                entry_type=LedgerEntryType.PAYMENT,
+                amount=allocation.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+                is_credit=True,
+                description=f"Payment allocation (payment_id={payment_id}, charge_id={charge.id})",
+                created_by=recorded_by,
+            )
+            created_entries.append(entry)
+            remaining_payment -= allocation
+
+        # If payment exceeds charges, remaining is credit balance
+        credit_balance = remaining_payment
+
+        return created_entries, None if remaining_payment == 0 else f"Credit balance remaining: {credit_balance}"

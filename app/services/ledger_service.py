@@ -62,3 +62,62 @@ class LedgerService:
 
     def list_entries_by_cycle(self, cycle_id: int) -> List[LedgerEntry]:
         return self.repository.list_by_cycle(cycle_id)
+
+    def compute_balance(
+        self,
+        meter_assignment_id: int,
+    ) -> Tuple[dict, Optional[str]]:
+        """
+        Compute net balance for a meter assignment.
+        Balance = sum(debits) - sum(credits)
+        Returns (balance_summary, error).
+        """
+        from decimal import Decimal
+
+        assignment = self.assignment_repository.get(meter_assignment_id)
+        if not assignment:
+            return {}, f"Meter assignment {meter_assignment_id} not found"
+
+        entries = self.repository.list_by_assignment(meter_assignment_id)
+
+        total_debits = Decimal("0.00")
+        total_credits = Decimal("0.00")
+
+        charges = Decimal("0.00")
+        penalties = Decimal("0.00")
+        payments = Decimal("0.00")
+        adjustments_debit = Decimal("0.00")
+        adjustments_credit = Decimal("0.00")
+
+        for entry in entries:
+            amount = Decimal(str(entry.amount))
+            if entry.is_credit:
+                total_credits += amount
+                if entry.entry_type == LedgerEntryType.PAYMENT.value:
+                    payments += amount
+                elif entry.entry_type == LedgerEntryType.ADJUSTMENT.value:
+                    adjustments_credit += amount
+            else:
+                total_debits += amount
+                if entry.entry_type == LedgerEntryType.CHARGE.value:
+                    charges += amount
+                elif entry.entry_type == LedgerEntryType.PENALTY.value:
+                    penalties += amount
+                elif entry.entry_type == LedgerEntryType.ADJUSTMENT.value:
+                    adjustments_debit += amount
+
+        net_balance = total_debits - total_credits
+
+        return {
+            "meter_assignment_id": meter_assignment_id,
+            "total_debits": float(total_debits),
+            "total_credits": float(total_credits),
+            "net_balance": float(net_balance),
+            "breakdown": {
+                "charges": float(charges),
+                "penalties": float(penalties),
+                "payments": float(payments),
+                "adjustments_debit": float(adjustments_debit),
+                "adjustments_credit": float(adjustments_credit),
+            }
+        }, None

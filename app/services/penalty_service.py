@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.models.penalty import Penalty, PenaltyStatus
+from app.models.ledger_entry import LedgerEntry
 from app.repositories.penalty import PenaltyRepository
 from app.repositories.meter_assignment import MeterAssignmentRepository
 from app.repositories.cycle import CycleRepository
@@ -73,3 +74,42 @@ class PenaltyService:
 
         updated = self.repository.waive(penalty_id, waived_by, notes)
         return updated, None
+
+    def apply_penalty_to_ledger(
+        self,
+        penalty_id: int,
+        created_by: str,
+    ) -> Tuple[Optional[LedgerEntry], Optional[str]]:
+        """
+        Apply an APPLIED penalty to the ledger as a PENALTY entry.
+        Idempotent: skips if already applied.
+        Returns (ledger_entry, error).
+        """
+        from decimal import Decimal, ROUND_HALF_UP
+        from app.repositories.ledger_entry import LedgerEntryRepository
+        from app.models.ledger_entry import LedgerEntryType
+
+        penalty = self.repository.get(penalty_id)
+        if not penalty:
+            return None, f"Penalty {penalty_id} not found"
+
+        if penalty.status != PenaltyStatus.APPLIED.value:
+            return None, f"Penalty {penalty_id} is not APPLIED (status={penalty.status})"
+
+        ledger_repo = LedgerEntryRepository(self.db)
+
+        # Check idempotency
+        if ledger_repo.check_penalty_applied(penalty_id):
+            return None, f"Penalty {penalty_id} already applied to ledger"
+
+        # Create PENALTY ledger entry
+        entry = ledger_repo.create(
+            meter_assignment_id=penalty.meter_assignment_id,
+            cycle_id=penalty.cycle_id,
+            entry_type=LedgerEntryType.PENALTY,
+            amount=Decimal(str(penalty.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            is_credit=False,  # penalty is a debit
+            description=f"{penalty.reason} (penalty_id={penalty_id})",
+            created_by=created_by,
+        )
+        return entry, None
