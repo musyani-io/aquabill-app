@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from app.repositories.sms import SMSRepository
 from app.schemas.sms import SMSMessageCreate, SMSMessageUpdate, SMSMessageResponse
-from app.models.sms import SMSStatus, SMSDeliveryStatus
+from app.models.sms import SMSMessage, SMSStatus, SMSDeliveryStatus
 
 
 class SMSService:
