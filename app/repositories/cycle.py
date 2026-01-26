@@ -67,6 +67,18 @@ class CycleRepository:
             query = query.filter(Cycle.id != exclude_id)
         
         return query.all()
+
+    def get_open_past_deadline(self, today: date) -> List[Cycle]:
+        """Get OPEN cycles whose submission deadline (target_date) has passed."""
+        return (
+            self.db.query(Cycle)
+            .filter(
+                Cycle.status == CycleStatus.OPEN.value,
+                Cycle.target_date < today
+            )
+            .order_by(Cycle.target_date.asc())
+            .all()
+        )
     
     def update_status(self, cycle_id: int, new_status: CycleStatus) -> Optional[Cycle]:
         """Update cycle status"""

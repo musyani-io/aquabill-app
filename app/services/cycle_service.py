@@ -159,6 +159,18 @@ class CycleService:
         # Transition to PENDING_REVIEW
         updated = self.repository.update_status(cycle_id, CycleStatus.PENDING_REVIEW)
         return updated, None
+
+    def auto_transition_overdue(self) -> Tuple[List[Cycle], int]:
+        """Transition all OPEN cycles past target_date to PENDING_REVIEW.
+        Returns (list of updated cycles, count)."""
+        today = date.today()
+        overdue_cycles = self.repository.get_open_past_deadline(today)
+        transitioned = []
+        for cycle in overdue_cycles:
+            updated = self.repository.update_status(cycle.id, CycleStatus.PENDING_REVIEW)
+            if updated:
+                transitioned.append(updated)
+        return transitioned, len(transitioned)
     
     def transition_status(
         self, 

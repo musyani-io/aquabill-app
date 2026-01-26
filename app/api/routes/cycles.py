@@ -149,6 +149,21 @@ def auto_transition_on_deadline(cycle_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/auto-transition/overdue")
+def auto_transition_overdue(db: Session = Depends(get_db)):
+    """
+    Auto-transition all OPEN cycles whose target_date has passed.
+    Intended for a scheduled job (cron/k8s CronJob/etc.).
+    """
+    service = CycleService(db)
+    transitioned, count = service.auto_transition_overdue()
+    return {
+        "updated_count": count,
+        "updated_ids": [c.id for c in transitioned],
+        "message": f"Auto-transitioned {count} overdue cycles to PENDING_REVIEW"
+    }
+
+
 @router.post("/{cycle_id}/transition", response_model=CycleRead)
 def transition_cycle_status(cycle_id: int, cycle_update: CycleUpdate, db: Session = Depends(get_db)):
     """
