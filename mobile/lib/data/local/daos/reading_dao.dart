@@ -54,6 +54,19 @@ class ReadingDao extends BaseDao {
     return rows.map(ReadingModel.fromLocalMap).toList();
   }
 
+  Future<ReadingModel?> getLastAcceptedForAssignment(int assignmentId) async {
+    final database = await db;
+    final rows = await database.query(
+      table,
+      where: 'meter_assignment_id = ? AND status = ?',
+      whereArgs: [assignmentId, 'ACCEPTED'],
+      orderBy: 'submitted_at DESC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return ReadingModel.fromLocalMap(rows.first);
+  }
+
   Future<void> updateStatus(int id, String status) async {
     final database = await db;
     await database.update(

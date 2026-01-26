@@ -43,6 +43,7 @@ class SyncEngine {
 
     await _db.clearCache();
     await _applyBootstrap(payload);
+    await _trimOldCycles(12);
     await _db.setMetadata('last_sync', payload.lastSync.toIso8601String());
     return payload.lastSync;
   }
@@ -57,6 +58,7 @@ class SyncEngine {
 
     final updates = await apiClient.fetchUpdates(existing);
     await _applyUpdates(updates);
+    await _trimOldCycles(12);
     await _db.setMetadata('last_sync', updates.lastSync.toIso8601String());
     return updates.lastSync;
   }
@@ -127,6 +129,39 @@ class SyncEngine {
     }
   }
 
+  /// Keep only the most recent [keepCount] cycles and related readings/conflicts.
+  Future<void> _trimOldCycles(int keepCount) async {
+    final db = await _db.database;
+
+    final rows = await db.rawQuery(
+      'SELECT id FROM cycles ORDER BY target_date DESC LIMIT ?',
+      [keepCount],
+    );
+    final keepIds = rows.map((row) => row['id'] as int).toList();
+    if (keepIds.isEmpty) return;
+
+    final placeholders = List.filled(keepIds.length, '?').join(',');
+
+    // Delete readings and conflicts tied to older cycles
+    await db.delete(
+      'readings',
+      where: 'cycle_id NOT IN ($placeholders)',
+      whereArgs: keepIds,
+    );
+    await db.delete(
+      'conflicts',
+      where: 'cycle_id NOT IN ($placeholders)',
+      whereArgs: keepIds,
+    );
+
+    // Delete old cycles themselves
+    await db.delete(
+      'cycles',
+      where: 'id NOT IN ($placeholders)',
+      whereArgs: keepIds,
+    );
+  }
+
   Future<void> _applyTombstone(TombstoneModel tombstone) async {
     final db = await _db.database;
     final ts = tombstone.timestamp.toIso8601String();
@@ -166,7 +201,8 @@ class SyncEngine {
       submittedAt: DateTime.parse(payload['submitted_at'] as String),
       clientTz: payload['client_tz'] as String?,
       source: payload['source'] as String?,
-      previousApprovedReading: _asDoubleNullable(payload['previous_approved_reading']),
+      previousApprovedReading:
+          _asDoubleNullable(payload['previous_approved_reading']),
       deviceId: payload['device_id'] as String?,
       appVersion: payload['app_version'] as String?,
       conflictId: payload['conflict_id'] as int?,
