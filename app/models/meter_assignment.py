@@ -1,5 +1,6 @@
 import enum
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, Date, CheckConstraint, func, Index
+from decimal import Decimal
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, Date, CheckConstraint, func, Index, Numeric
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -18,6 +19,7 @@ class MeterAssignment(Base):
             "(end_date IS NULL AND status = 'ACTIVE') OR (end_date IS NOT NULL AND status = 'INACTIVE')",
             name="ck_assignment_active_no_end_date"
         ),
+        CheckConstraint("max_meter_value IS NULL OR max_meter_value > 0", name="ck_assignment_max_meter_value_positive"),
         Index("ix_meter_assignments_active", "meter_id", "status", unique=True, 
               postgresql_where="status = 'ACTIVE'"),
     )
@@ -28,6 +30,7 @@ class MeterAssignment(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)
     status = Column(Enum(AssignmentStatus), nullable=False, default=AssignmentStatus.ACTIVE)
+    max_meter_value = Column(Numeric(9, 4), nullable=True, comment="Meter rollover limit (e.g., 999999.9999). NULL if unknown.")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

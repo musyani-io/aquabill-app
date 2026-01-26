@@ -1,3 +1,10 @@
+
+
+class VerifyRolloverRequest(BaseModel):
+    """Request body for verifying a rollover reading"""
+    max_meter_value: Decimal = Field(..., gt=0, decimal_places=4, description="Meter's max value (e.g., 999999.9999)")
+    verified_by: str = Field(..., min_length=1, max_length=100, description="Admin username verifying rollover")
+    verification_notes: str = Field(None, max_length=500, description="Notes about rollover verification")
 """
 Reading API routes - meter reading submission and approval endpoints.
 """
@@ -206,3 +213,69 @@ def list_all_readings(
     """List all readings with pagination (newest first)"""
     service = ReadingService(db)
     return service.list_readings(skip=skip, limit=limit)
+
+
+@router.post("/{reading_id}/verify-rollover", response_model=ReadingRead, status_code=status.HTTP_200_OK)
+def verify_rollover(
+    reading_id: int,
+    max_meter_value: Decimal = Query(..., gt=0, description="Meter max value"),
+    verified_by: str = Query(..., description="Admin username"),
+    verification_notes: str = Query(None, description="Notes about rollover"),
+    db: Session = Depends(get_db)
+):
+    """
+    Verify and resolve a rollover reading.
+    
+    Admin confirms that meter rolled over and provides the maximum meter value.
+    
+    Recalculates consumption:
+    - consumption = (max_meter_value - previous_reading) + current_reading
+    - Example: previous=99800, current=200, max=99999
+    - consumption = (99999 - 99800) + 200 = 399
+    
+    Returns:
+    - Reading with corrected consumption and has_rollover=False
+    """
+    service = ReadingService(db)
+    reading, error = service.verify_rollover(
+        reading_id=reading_id,
+        max_meter_value=max_meter_value,
+        verified_by=verified_by,
+        verification_notes=verification_notes
+    )
+    
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    return reading
+
+
+@router.post("/{reading_id}/reject-rollover", status_code=status.HTTP_200_OK)
+def reject_rollover(
+    reading_id: int,
+    rejected_by: str = Query(..., description="Admin username"),
+    reason: str = Query(..., description="Reason for rejecting rollover claim"),
+    db: Session = Depends(get_db)
+):
+    """
+    Reject a rollover claim (mark as false positive).
+    
+    Admin determines the reading is not actually a rollover.
+    User must resubmit corrected reading.
+    """
+    service = ReadingService(db)
+    reading, error = service.reject_rollover_as_error(
+        reading_id=reading_id,
+        rejected_by=rejected_by,
+        reason=reason
+    )
+    
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    
+    return {
+        "id": reading.id,
+        "status": "rollover_rejected",
+        "notes": reading.notes,
+        "message": f"Rollover for reading {reading_id} rejected as error. User can resubmit corrected reading."
+    }

@@ -72,7 +72,8 @@ class AuditLog(Base):
     
     # Additional context
     description = Column(Text, nullable=False)  # Human-readable description
-    metadata = Column(Text, nullable=True)  # JSON string with additional context
+    metadata_json = Column("metadata", Text, nullable=True)  # JSON string with additional context (rename attr to avoid reserved name)
+
     
     # IP address for security auditing
     ip_address = Column(String(45), nullable=True)  # IPv6 max length

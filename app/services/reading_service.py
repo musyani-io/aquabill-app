@@ -300,3 +300,111 @@ class ReadingService:
         self.db.refresh(reading)
         
         return reading, None
+    
+    def verify_rollover(
+        self,
+        reading_id: int,
+        max_meter_value: Decimal,
+        verified_by: str,
+        verification_notes: Optional[str] = None
+    ) -> Tuple[Optional[Reading], Optional[str]]:
+        """
+        Verify and resolve a rollover reading.
+        
+        WORKFLOW:
+        1. Validate reading has has_rollover=True
+        2. Recalculate consumption: (max_meter_value - previous_reading) + current_reading
+        3. Update meter assignment with max_meter_value
+        4. Update reading with corrected consumption
+        5. Mark rollover as resolved
+        
+        Args:
+            reading_id: Reading with negative consumption
+            max_meter_value: Meter's maximum value (e.g., 999999.9999)
+            verified_by: Admin ID confirming rollover
+            verification_notes: Optional notes about rollover verification
+            
+        Returns:
+            (updated Reading, None) if successful
+            (None, error_message) if validation fails
+        """
+        reading = self.repository.get(reading_id)
+        if not reading:
+            return None, f"Reading {reading_id} not found"
+        
+        if not reading.has_rollover:
+            return None, f"Reading {reading_id} does not have rollover flag set"
+        
+        if reading.consumption is not None and reading.consumption >= 0:
+            return None, f"Reading {reading_id} consumption is not negative (no rollover needed)"
+        
+        # Get assignment and previous reading
+        assignment = self.assignment_repository.get(reading.meter_assignment_id)
+        if not assignment:
+            return None, f"Meter assignment {reading.meter_assignment_id} not found"
+        
+        prev_reading = self.repository.get_latest_approved(
+            reading.meter_assignment_id,
+            exclude_id=reading.id
+        )
+        
+        if not prev_reading:
+            return None, "No previous approved reading found for rollover calculation"
+        
+        # ============ Calculate corrected consumption ============
+        # True consumption = (max_meter_value - previous) + current
+        # Example: previous=99800, current=200, max=99999
+        # consumption = (99999 - 99800) + 200 = 199 + 200 = 399
+        
+        corrected_consumption = (
+            Decimal(max_meter_value) - Decimal(prev_reading.absolute_value)
+        ) + Decimal(reading.absolute_value)
+        
+        if corrected_consumption < 0:
+            return None, f"Corrected consumption is still negative ({corrected_consumption}). Verify max_meter_value."
+        
+        # ============ Update meter assignment with max_meter_value ============
+        assignment.max_meter_value = max_meter_value
+        
+        # ============ Update reading with corrected consumption ============
+        reading.consumption = corrected_consumption
+        reading.has_rollover = False  # Rollover is now resolved
+        reading.approval_notes = (
+            f"ROLLOVER VERIFIED: {verified_by} confirmed meter reset at {max_meter_value}. "
+            f"Previous: {prev_reading.absolute_value}, Current: {reading.absolute_value}, "
+            f"Corrected consumption: {corrected_consumption}. {verification_notes or ''}"
+        )
+        
+        self.db.add(assignment)
+        self.db.add(reading)
+        self.db.commit()
+        self.db.refresh(reading)
+        
+        return reading, None
+    
+    def reject_rollover_as_error(
+        self,
+        reading_id: int,
+        rejected_by: str,
+        reason: str
+    ) -> Tuple[Optional[Reading], Optional[str]]:
+        """
+        Reject a rollover reading as an error (not an actual rollover).
+        
+        Allows admin to mark a rollover detection as a false positive.
+        User must resubmit corrected reading.
+        """
+        reading = self.repository.get(reading_id)
+        if not reading:
+            return None, f"Reading {reading_id} not found"
+        
+        if not reading.has_rollover:
+            return None, f"Reading {reading_id} does not have rollover flag"
+        
+        # Mark as rejected with reason
+        reading.notes = f"ROLLOVER REJECTED: {rejected_by} marked as error. Reason: {reason}"
+        self.db.add(reading)
+        self.db.commit()
+        self.db.refresh(reading)
+        
+        return reading, None
