@@ -1,6 +1,7 @@
 # Audit Logging Decorator Usage Guide
 
 ## Overview
+
 The `@audit_log` decorator automatically logs admin actions to the immutable audit trail. Use it on service methods that perform significant operations.
 
 ## Basic Usage
@@ -34,6 +35,7 @@ class ReadingService:
 ## Examples
 
 ### Reading Approval
+
 ```python
 @audit_log(
     action=AuditAction.READING_APPROVED,
@@ -46,6 +48,7 @@ def approve_reading(self, reading_id: int, admin_username: str, db: Session):
 ```
 
 ### Payment Recording
+
 ```python
 @audit_log(
     action=AuditAction.PAYMENT_RECORDED,
@@ -59,6 +62,7 @@ def record_payment(self, client_id: int, amount: Decimal, admin_username: str, d
 ```
 
 ### Penalty Application
+
 ```python
 @audit_log(
     action=AuditAction.PENALTY_APPLIED,
@@ -71,6 +75,7 @@ def apply_penalty(self, meter_assignment_id: int, amount: Decimal, reason: str, 
 ```
 
 ### Async Functions
+
 ```python
 from app.core.audit_decorator import audit_log_async
 
@@ -147,12 +152,14 @@ service.log_missing_baseline(
 ## Available Audit Actions
 
 ### Reading Management
+
 - `READING_APPROVED`
 - `READING_REJECTED`
 - `READING_EDITED`
 - `READING_DELETED`
 
 ### Cycle Management
+
 - `CYCLE_CREATED`
 - `CYCLE_STATE_CHANGED`
 - `CYCLE_APPROVED`
@@ -160,27 +167,32 @@ service.log_missing_baseline(
 - `CYCLE_ARCHIVED`
 
 ### Conflict Resolution
+
 - `CONFLICT_RESOLVED`
 - `CONFLICT_ASSIGNED`
 - `ANOMALY_ACKNOWLEDGED`
 
 ### Financial Actions
+
 - `PENALTY_APPLIED`
 - `PENALTY_WAIVED`
 - `PAYMENT_RECORDED`
 - `LEDGER_ADJUSTMENT`
 
 ### Meter Management
+
 - `METER_ASSIGNED`
 - `METER_UNASSIGNED`
 - `METER_CREATED`
 
 ### Client Management
+
 - `CLIENT_CREATED`
 - `CLIENT_UPDATED`
 - `CLIENT_DELETED`
 
 ### System Actions
+
 - `DATA_EXPORTED`
 - `BACKUP_CREATED`
 - `SETTINGS_CHANGED`
