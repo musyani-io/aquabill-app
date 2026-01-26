@@ -1,8 +1,8 @@
 # AquaBill TODOs
 
-High-level, sequenced tasks to build AquaBill.
+High-level, sequenced tasks to build AquaBill. Progress snapshot: Phases 0–4 plus exports/archive are done; next up is Phase 5 (mobile), then Phase 6 (tests/CI), then Phase 7 (deployment/ops).
 
-## Phase 0 — Foundations
+## Phase 0 — Foundations (Done)
 
 1. Draft guidelines and TODOs files
 2. Confirm repo layout (backend/app, migrations, tests)
@@ -11,7 +11,7 @@ High-level, sequenced tasks to build AquaBill.
 5. Configure Alembic and base migration
 6. Set up env config (.env, settings, secrets)
 
-## Phase 1 — Domain & Schema
+## Phase 1 — Domain & Schema (Done)
 
 1. Design clients table and CRUD
 2. Design meters table and CRUD
@@ -24,7 +24,7 @@ High-level, sequenced tasks to build AquaBill.
 9. Design sms_messages + delivery_history
 10. Apply initial Alembic migrations
 
-## Phase 2 — Core Workflows
+## Phase 2 — Core Workflows (Done)
 
 1. Meter assignment workflow + baseline enforcement
 2. Cycle scheduling and OPEN state creation
@@ -33,7 +33,7 @@ High-level, sequenced tasks to build AquaBill.
 5. Rollover detection + verification flow
 6. Auto transition OPEN→PENDING_REVIEW on window close
 
-## Phase 3 — Accounting & Notifications
+## Phase 3 — Accounting & Notifications (Done)
 
 1. Generate cycle charges on APPROVAL
 2. Payments FIFO application + credits
@@ -44,28 +44,28 @@ High-level, sequenced tasks to build AquaBill.
 7. SMS retry scheduler (immediate/30m/4h, max 3)
 8. Persist SMS delivery history and alerting
 
-## Phase 4 — Observability & Compliance
+## Phase 4 — Observability & Compliance (Done)
 
 1. Anomaly logging + admin acknowledgement
 2. Audit logging decorator for admin actions
 3. Exports: monthly cycle completion, annual ledger (CSV/PDF), on-demand
 4. Archive job: move ≥36 months to read-only tables
 
-## Phase 5 — Mobile (Flutter)
+## Phase 5 — Mobile (Flutter) — Next
 
 1. Local SQLite schema for 12 cycles + assignments
 2. Offline capture UI: search + show phone number
 3. Show previous approved reading (read-only), input absolute up to 4dp
 4. Background sync; conflict flagging; server-wins handling
 
-## Phase 6 — Testing & DevOps
+## Phase 6 — Testing & DevOps — Upcoming
 
 1. Unit tests: precision, baseline, FIFO, rollover math
 2. Integration tests: cycles, conflicts, SMS retries
 3. CI pipeline: lint, tests, migrations validation
 4. Ops: backups and export integrity checks
 
-## Phase 7 — Deployment & Operations
+## Phase 7 — Deployment & Operations — Upcoming
 
 1. Containerize backend (Dockerfile with FastAPI/Uvicorn)
 2. Runtime configuration: env vars, secrets, logging levels
