@@ -12,6 +12,7 @@ from app.api.routes.audit_logs import router as audit_logs_router
 from app.api.routes.sms import router as sms_router
 from app.api.routes.exports import router as exports_router
 from app.api.routes.archive import router as archive_router
+from app.api.routes.mobile import router as mobile_router
 
 app = FastAPI(title="AquaBill API", version="0.1.0")
 
@@ -38,3 +39,4 @@ app.include_router(audit_logs_router, prefix="/api/v1")
 app.include_router(sms_router, prefix="/api/v1/sms", tags=["sms"])
 app.include_router(exports_router, prefix="/api/v1")
 app.include_router(archive_router, prefix="/api/v1")
+app.include_router(mobile_router, prefix="/api/v1")

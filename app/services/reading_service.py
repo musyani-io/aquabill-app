@@ -63,7 +63,7 @@ class ReadingService:
         if not assignment:
             return None, f"Meter assignment {meter_assignment_id} not found"
 
-        if assignment.status != AssignmentStatus.ACTIVE.value:
+        if assignment.status != AssignmentStatus.ACTIVE:
             return (
                 None,
                 f"Meter assignment {meter_assignment_id} is not ACTIVE (current: {assignment.status})",
@@ -114,7 +114,7 @@ class ReadingService:
             meter_assignment_id=meter_assignment_id,
             cycle_id=cycle_id,
             absolute_value=absolute_value,
-            type=ReadingType.NORMAL,
+            reading_type=ReadingType.NORMAL,
             submitted_by=submitted_by,
             submission_notes=submission_notes,
         )

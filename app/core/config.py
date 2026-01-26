@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": ".env",
         "env_prefix": "AQUABILL_",
+        "extra": "ignore",
     }
 
 
