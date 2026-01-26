@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'data/local/daos/sync_queue_dao.dart';
 import 'ui/capture_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/settings_screen.dart';
@@ -33,6 +34,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _index = 0;
+  int _pendingCount = 0;
+  final SyncQueueDao _syncQueueDao = SyncQueueDao();
 
   final List<Widget> _pages = const [
     CaptureScreen(),
@@ -47,12 +50,41 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadPendingCount();
+  }
+
+  Future<void> _loadPendingCount() async {
+    final count = await _syncQueueDao.pendingCount();
+    setState(() => _pendingCount = count);
+  }
+
+  void _refreshPendingCount() {
+    _loadPendingCount();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_index]),
+        actions: [
+          if (_pendingCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Badge(
+                  label: Text('$_pendingCount'),
+                  child: const Icon(Icons.cloud_upload),
+                ),
+              ),
+            ),
+        ],
       ),
-      body: _pages[_index],
+      body: _index == 2
+          ? SettingsScreen(onSyncComplete: _refreshPendingCount)
+          : _pages[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
