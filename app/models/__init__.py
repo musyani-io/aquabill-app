@@ -11,3 +11,4 @@ from app.models.ledger_entry import LedgerEntry  # noqa: F401
 from app.models.payment import Payment  # noqa: F401
 from app.models.penalty import Penalty  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.sms import SMSMessage, SMSDeliveryHistory  # noqa: F401
