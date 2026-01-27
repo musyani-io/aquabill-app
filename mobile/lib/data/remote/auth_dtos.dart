@@ -80,6 +80,16 @@ class CollectorCreateRequest {
   Map<String, dynamic> toJson() => {'name': name, 'password': password};
 }
 
+/// DTO for collector login request
+class CollectorLoginRequest {
+  final String name;
+  final String password;
+
+  CollectorLoginRequest({required this.name, required this.password});
+
+  Map<String, dynamic> toJson() => {'name': name, 'password': password};
+}
+
 /// DTO for collector response
 class CollectorResponse {
   final int id;

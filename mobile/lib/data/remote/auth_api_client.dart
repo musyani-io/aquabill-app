@@ -57,14 +57,10 @@ class AuthApiClient {
   }
 
   /// Login as collector (password only)
-  Future<LoginResponse> loginCollector(
-    int collectorId,
-    CollectorLoginRequest request,
-  ) async {
+  Future<LoginResponse> loginCollector(CollectorLoginRequest request) async {
     try {
       final response = await _dio.post(
         '/api/v1/auth/collector/login',
-        queryParameters: {'collector_id': collectorId},
         data: request.toJson(),
       );
 

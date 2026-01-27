@@ -53,18 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
         response = await authClient.loginAdmin(request);
       } else {
         // Collector login - name and password
-        // First, we need to fetch collectors list to find the collector ID by name
-        // For now, show a helpful message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Collector login coming soon. Please use admin account to manage collectors.',
-            ),
-            duration: Duration(seconds: 3),
-          ),
+        final request = CollectorLoginRequest(
+          name: username,
+          password: password,
         );
-        setState(() => _loading = false);
-        return;
+        response = await authClient.loginCollector(request);
       }
 
       await AuthService().login(

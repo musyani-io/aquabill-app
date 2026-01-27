@@ -226,14 +226,13 @@ def delete_collector(
 
 @router.post("/collector/login", response_model=CollectorLoginResponse)
 def login_collector(
-    collector_id: int,
     request: CollectorLoginRequest,
     db: Session = Depends(get_db)
 ):
-    """Collector login with password only"""
+    """Collector login with name and password"""
 
     collector = db.query(CollectorUser).filter(
-        CollectorUser.id == collector_id
+        CollectorUser.name == request.name
     ).first()
 
     if not collector:

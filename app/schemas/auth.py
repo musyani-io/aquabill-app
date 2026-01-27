@@ -60,7 +60,8 @@ class CollectorCreateRequest(BaseModel):
 
 
 class CollectorLoginRequest(BaseModel):
-    """Collector login request (password only)"""
+    """Collector login request (name and password)"""
+    name: str = Field(..., min_length=1, max_length=100)
     password: str = Field(..., min_length=4)
 
 
