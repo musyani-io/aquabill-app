@@ -18,11 +18,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _companyNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _roleController = TextEditingController();
-  final TextEditingController _estimatedClientsController = TextEditingController();
+  final TextEditingController _estimatedClientsController =
+      TextEditingController();
 
   bool _loading = false;
   bool _obscurePassword = true;
@@ -52,9 +54,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final password = _passwordController.text.trim();
       final confirmPassword = _confirmPasswordController.text.trim();
       final companyName = _companyNameController.text.trim();
-      final phoneNumber = _phoneNumberController.text.trim();
+      var phoneNumber = _phoneNumberController.text.trim();
+
+      // Normalize phone number to +255 format
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '+255${phoneNumber.substring(1)}';
+      }
+
       final role = _roleController.text.trim();
-      final estimatedClients = int.parse(_estimatedClientsController.text.trim());
+      final estimatedClients = int.parse(
+        _estimatedClientsController.text.trim(),
+      );
 
       final authClient = AuthApiClient(baseUrl: Config.apiBaseUrl);
       final request = AdminRegisterRequest(
@@ -88,9 +98,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign up failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sign up failed: $e')));
       }
     } finally {
       if (mounted) {
@@ -102,10 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Sign Up'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Admin Sign Up'), elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -125,15 +132,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   'Create Admin Account',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   'Fill in your company details to get started',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 32),
 
@@ -141,8 +148,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text(
                   'Personal Information',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -178,7 +185,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -213,8 +222,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             : Icons.visibility_off,
                       ),
                       onPressed: () {
-                        setState(() =>
-                            _obscureConfirmPassword = !_obscureConfirmPassword);
+                        setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        );
                       },
                     ),
                   ),
@@ -235,8 +246,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text(
                   'Company Information',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -265,15 +276,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     labelText: 'Company Phone Number *',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.phone),
-                    helperText: 'For SMS notifications (e.g., +255712345678)',
+                    helperText:
+                        'Formats: +255712345678, 0712345678, or 0612345678',
                   ),
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Phone number is required';
                     }
-                    if (!value.startsWith('+')) {
-                      return 'Phone number must include country code (e.g., +255)';
+                    final trimmed = value.trim();
+                    // Accept: +255..., 07..., or 06...
+                    if (!trimmed.startsWith('+255') &&
+                        !trimmed.startsWith('07') &&
+                        !trimmed.startsWith('06')) {
+                      return 'Format: +255712345678, 0712345678, or 0612345678';
+                    }
+                    // Validate length
+                    if (trimmed.startsWith('+255') && trimmed.length != 13) {
+                      return 'Invalid length for +255 format (should be 13 digits)';
+                    }
+                    if ((trimmed.startsWith('07') ||
+                            trimmed.startsWith('06')) &&
+                        trimmed.length != 10) {
+                      return 'Invalid length (should be 10 digits for 07/06 format)';
                     }
                     return null;
                   },
@@ -310,9 +335,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     helperText: 'Approximate number of water meter clients',
                   ),
                   keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Estimated clients is required';

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'core/auth_service.dart';
 import 'data/local/daos/sync_queue_dao.dart';
@@ -11,6 +13,15 @@ import 'ui/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize sqflite for desktop platforms (Linux, Windows, macOS)
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   // Initialize background sync service
   await BackgroundSyncService().initialize();
@@ -67,11 +78,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return _isLoggedIn ? const HomePage() : const LoginScreen();
@@ -89,6 +96,7 @@ class _HomePageState extends State<HomePage> {
   int _index = 0;
   int _pendingCount = 0;
   bool _isAdmin = false;
+  bool _isLoadingRole = true;
   final SyncQueueDao _syncQueueDao = SyncQueueDao();
 
   late List<Widget> _pages;
@@ -114,13 +122,10 @@ class _HomePageState extends State<HomePage> {
         ];
         _titles = const ['Capture', 'Admin', 'Conflicts', 'Settings'];
       } else {
-        _pages = const [
-          CaptureScreen(),
-          ConflictsScreen(),
-          SettingsScreen(),
-        ];
+        _pages = const [CaptureScreen(), ConflictsScreen(), SettingsScreen()];
         _titles = const ['Capture', 'Conflicts', 'Settings'];
       }
+      _isLoadingRole = false;
     });
   }
 
@@ -135,10 +140,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_pages == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    if (_isLoadingRole) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(

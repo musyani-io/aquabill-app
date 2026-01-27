@@ -1,5 +1,3 @@
-import 'package:dio/dio.dart';
-
 /// DTO for admin registration request
 class AdminRegisterRequest {
   final String username;
@@ -36,15 +34,9 @@ class AdminLoginRequest {
   final String username;
   final String password;
 
-  AdminLoginRequest({
-    required this.username,
-    required this.password,
-  });
+  AdminLoginRequest({required this.username, required this.password});
 
-  Map<String, dynamic> toJson() => {
-    'username': username,
-    'password': password,
-  };
+  Map<String, dynamic> toJson() => {'username': username, 'password': password};
 }
 
 /// DTO for collector login request
@@ -53,9 +45,7 @@ class CollectorLoginRequest {
 
   CollectorLoginRequest({required this.password});
 
-  Map<String, dynamic> toJson() => {
-    'password': password,
-  };
+  Map<String, dynamic> toJson() => {'password': password};
 }
 
 /// DTO for login response (admin or collector)
@@ -85,15 +75,9 @@ class CollectorCreateRequest {
   final String name;
   final String password;
 
-  CollectorCreateRequest({
-    required this.name,
-    required this.password,
-  });
+  CollectorCreateRequest({required this.name, required this.password});
 
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'password': password,
-  };
+  Map<String, dynamic> toJson() => {'name': name, 'password': password};
 }
 
 /// DTO for collector response
@@ -124,10 +108,7 @@ class CollectorListResponse {
   final int total;
   final List<CollectorResponse> collectors;
 
-  CollectorListResponse({
-    required this.total,
-    required this.collectors,
-  });
+  CollectorListResponse({required this.total, required this.collectors});
 
   factory CollectorListResponse.fromJson(Map<String, dynamic> json) =>
       CollectorListResponse(

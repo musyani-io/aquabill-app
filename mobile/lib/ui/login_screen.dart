@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   UserRole _selectedRole = UserRole.collector;
   bool _loading = false;
   bool _obscurePassword = true;
@@ -52,12 +52,15 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         response = await authClient.loginAdmin(request);
       } else {
-        // Collector login - password only
-        // Note: In a real app, collector IDs would be fetched from a list first
-        // For now, this will fail if collector ID is not known
+        // Collector login - name and password
+        // First, we need to fetch collectors list to find the collector ID by name
+        // For now, show a helpful message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Collector login requires collector ID. Please contact your admin.'),
+            content: Text(
+              'Collector login coming soon. Please use admin account to manage collectors.',
+            ),
+            duration: Duration(seconds: 3),
           ),
         );
         setState(() => _loading = false);
@@ -76,9 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
       }
     } finally {
       if (mounted) {
@@ -101,27 +104,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Logo/Title
-                  const Icon(
-                    Icons.water_drop,
-                    size: 80,
-                    color: Colors.blue,
-                  ),
+                  const Icon(Icons.water_drop, size: 80, color: Colors.blue),
                   const SizedBox(height: 16),
                   Text(
                     'AquaBill',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Water Meter Reading & Billing',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 48),
 
@@ -175,26 +174,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Username Field (only for admin)
-                  if (_selectedRole == UserRole.admin) ...[
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                      validator: (value) {
-                        if (_selectedRole == UserRole.admin &&
-                            (value == null || value.trim().isEmpty)) {
-                          return 'Username is required';
-                        }
-                        return null;
-                      },
-                      textInputAction: TextInputAction.next,
+                  // Username/Name Field
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: _selectedRole == UserRole.admin
+                          ? 'Username'
+                          : 'Collector Name',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.person),
+                      helperText: _selectedRole == UserRole.collector
+                          ? 'Enter your name as assigned by admin'
+                          : null,
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return _selectedRole == UserRole.admin
+                            ? 'Username is required'
+                            : 'Collector name is required';
+                      }
+                      return null;
+                    },
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
 
                   // Password Field
                   TextFormField(
@@ -295,9 +298,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       'Contact your administrator if you forgot your password',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                     ),
                 ],
               ),

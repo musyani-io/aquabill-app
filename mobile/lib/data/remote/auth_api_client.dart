@@ -7,19 +7,18 @@ class AuthApiClient {
   final Dio _dio;
   final String baseUrl;
 
-  AuthApiClient({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio =
-           dio ??
-           Dio(
-             BaseOptions(
-               baseUrl: baseUrl,
-               connectTimeout: const Duration(seconds: 15),
-               receiveTimeout: const Duration(seconds: 20),
-               responseType: ResponseType.json,
-             ),
-           );
+  AuthApiClient({Dio? dio, required this.baseUrl})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: baseUrl,
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 20),
+              contentType: Headers.jsonContentType,
+              responseType: ResponseType.json,
+            ),
+          );
 
   /// Register a new admin account
   Future<LoginResponse> registerAdmin(AdminRegisterRequest request) async {
@@ -29,14 +28,11 @@ class AuthApiClient {
         data: request.toJson(),
       );
 
-      if (response.statusCode == 200) {
-        return LoginResponse.fromJson(response.data as Map<String, dynamic>);
-      } else {
-        throw ApiException(
-          message: response.data['detail'] ?? 'Registration failed',
-          statusCode: response.statusCode,
-        );
+      if (_isSuccess(response.statusCode)) {
+        return LoginResponse.fromJson(_ensureMap(response.data));
       }
+
+      throw _buildApiException(response, fallback: 'Registration failed');
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -50,14 +46,11 @@ class AuthApiClient {
         data: request.toJson(),
       );
 
-      if (response.statusCode == 200) {
-        return LoginResponse.fromJson(response.data as Map<String, dynamic>);
-      } else {
-        throw ApiException(
-          message: response.data['detail'] ?? 'Login failed',
-          statusCode: response.statusCode,
-        );
+      if (_isSuccess(response.statusCode)) {
+        return LoginResponse.fromJson(_ensureMap(response.data));
       }
+
+      throw _buildApiException(response, fallback: 'Login failed');
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -75,14 +68,11 @@ class AuthApiClient {
         data: request.toJson(),
       );
 
-      if (response.statusCode == 200) {
-        return LoginResponse.fromJson(response.data as Map<String, dynamic>);
-      } else {
-        throw ApiException(
-          message: response.data['detail'] ?? 'Login failed',
-          statusCode: response.statusCode,
-        );
+      if (_isSuccess(response.statusCode)) {
+        return LoginResponse.fromJson(_ensureMap(response.data));
       }
+
+      throw _buildApiException(response, fallback: 'Login failed');
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -97,19 +87,17 @@ class AuthApiClient {
       final response = await _dio.post(
         '/api/v1/admin/collectors',
         data: request.toJson(),
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      if (response.statusCode == 200) {
-        return CollectorResponse.fromJson(response.data as Map<String, dynamic>);
-      } else {
-        throw ApiException(
-          message: response.data['detail'] ?? 'Failed to create collector',
-          statusCode: response.statusCode,
-        );
+      if (_isSuccess(response.statusCode)) {
+        return CollectorResponse.fromJson(_ensureMap(response.data));
       }
+
+      throw _buildApiException(
+        response,
+        fallback: 'Failed to create collector',
+      );
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -120,21 +108,17 @@ class AuthApiClient {
     try {
       final response = await _dio.get(
         '/api/v1/admin/collectors',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      if (response.statusCode == 200) {
-        return CollectorListResponse.fromJson(
-          response.data as Map<String, dynamic>,
-        );
-      } else {
-        throw ApiException(
-          message: response.data['detail'] ?? 'Failed to fetch collectors',
-          statusCode: response.statusCode,
-        );
+      if (_isSuccess(response.statusCode)) {
+        return CollectorListResponse.fromJson(_ensureMap(response.data));
       }
+
+      throw _buildApiException(
+        response,
+        fallback: 'Failed to fetch collectors',
+      );
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -145,15 +129,13 @@ class AuthApiClient {
     try {
       final response = await _dio.delete(
         '/api/v1/admin/collectors/$collectorId',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      if (response.statusCode != 204) {
-        throw ApiException(
-          message: response.data['detail'] ?? 'Failed to delete collector',
-          statusCode: response.statusCode,
+      if (!_isSuccess(response.statusCode, allowNoContent: true)) {
+        throw _buildApiException(
+          response,
+          fallback: 'Failed to delete collector',
         );
       }
     } on DioException catch (e) {
@@ -168,18 +150,51 @@ class AuthApiClient {
 
     if (e.response != null) {
       statusCode = e.response!.statusCode;
-      final detail = e.response!.data is Map<String, dynamic>
-          ? e.response!.data['detail']
-          : null;
+      final detail = _extractDetail(e.response!.data);
       message = detail ?? e.message ?? 'An error occurred';
     } else if (e.type == DioExceptionType.connectionTimeout) {
       message = 'Connection timeout';
+    } else if (e.type == DioExceptionType.sendTimeout) {
+      message = 'Send timeout';
     } else if (e.type == DioExceptionType.receiveTimeout) {
       message = 'Request timeout';
-    } else if (e.type == DioExceptionType.unknown) {
+    } else if (e.type == DioExceptionType.cancel) {
+      message = 'Request cancelled';
+    } else if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.unknown) {
       message = 'Network error: ${e.error}';
     }
 
     return ApiException(message: message, statusCode: statusCode);
+  }
+
+  bool _isSuccess(int? statusCode, {bool allowNoContent = false}) {
+    if (statusCode == null) return false;
+    if (allowNoContent && statusCode == 204) return true;
+    return statusCode >= 200 && statusCode < 300;
+  }
+
+  Map<String, dynamic> _ensureMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    throw ApiException(message: 'Unexpected response format');
+  }
+
+  ApiException _buildApiException(
+    Response<dynamic> response, {
+    required String fallback,
+  }) {
+    final detail = _extractDetail(response.data);
+    return ApiException(
+      message: detail ?? fallback,
+      statusCode: response.statusCode,
+    );
+  }
+
+  String? _extractDetail(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final detail = data['detail'];
+      if (detail is String && detail.isNotEmpty) return detail;
+    }
+    return null;
   }
 }
