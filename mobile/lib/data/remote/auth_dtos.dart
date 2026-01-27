@@ -39,7 +39,56 @@ class AdminLoginRequest {
   Map<String, dynamic> toJson() => {'username': username, 'password': password};
 }
 
-/// DTO for login response (admin or collector)
+/// DTO for admin login response
+class AdminLoginResponse {
+  final String token;
+  final int userId;
+  final String username;
+  final String companyName;
+  final String role;
+
+  AdminLoginResponse({
+    required this.token,
+    required this.userId,
+    required this.username,
+    required this.companyName,
+    required this.role,
+  });
+
+  factory AdminLoginResponse.fromJson(Map<String, dynamic> json) =>
+      AdminLoginResponse(
+        token: json['token'] as String,
+        userId: json['user_id'] as int,
+        username: json['username'] as String,
+        companyName: json['company_name'] as String,
+        role: json['role'] as String? ?? 'admin',
+      );
+}
+
+/// DTO for collector login response
+class CollectorLoginResponse {
+  final String token;
+  final int collectorId;
+  final String name;
+  final String role;
+
+  CollectorLoginResponse({
+    required this.token,
+    required this.collectorId,
+    required this.name,
+    required this.role,
+  });
+
+  factory CollectorLoginResponse.fromJson(Map<String, dynamic> json) =>
+      CollectorLoginResponse(
+        token: json['token'] as String,
+        collectorId: json['collector_id'] as int,
+        name: json['name'] as String,
+        role: json['role'] as String? ?? 'collector',
+      );
+}
+
+/// Generic login response (for backward compatibility)
 class LoginResponse {
   final String token;
   final int userId;

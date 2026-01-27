@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -8,16 +8,16 @@ from datetime import datetime
 class AdminRegisterRequest(BaseModel):
     """Admin sign up request"""
     username: str = Field(..., min_length=3, max_length=100)
-    password: str = Field(..., min_length=6)
-    confirm_password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=6, max_length=72)
+    confirm_password: str = Field(..., min_length=6, max_length=72)
     company_name: str = Field(..., min_length=1, max_length=255)
-    company_phone: str = Field(..., pattern=r'^\+\d{1,3}\d{1,14}$')
+    company_phone: str = Field(..., pattern=r'^\+\d{7,15}$')
     role_at_company: str = Field(..., min_length=1, max_length=100)
     estimated_clients: int = Field(..., ge=1)
 
-    @validator('confirm_password')
-    def passwords_match(cls, v, values):
-        if 'password' in values and v != values['password']:
+    @field_validator('confirm_password')
+    def passwords_match(cls, v, info):
+        if 'password' in info.data and v != info.data['password']:
             raise ValueError('Passwords do not match')
         return v
 

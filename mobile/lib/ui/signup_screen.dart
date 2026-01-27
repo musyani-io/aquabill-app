@@ -82,7 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await AuthService().login(
         token: response.token,
         role: UserRole.admin,
-        username: response.name,
+        username: response.username,
       );
 
       if (mounted) {

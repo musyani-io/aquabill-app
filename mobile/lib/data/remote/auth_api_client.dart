@@ -21,7 +21,7 @@ class AuthApiClient {
           );
 
   /// Register a new admin account
-  Future<LoginResponse> registerAdmin(AdminRegisterRequest request) async {
+  Future<AdminLoginResponse> registerAdmin(AdminRegisterRequest request) async {
     try {
       final response = await _dio.post(
         '/api/v1/auth/admin/register',
@@ -29,7 +29,7 @@ class AuthApiClient {
       );
 
       if (_isSuccess(response.statusCode)) {
-        return LoginResponse.fromJson(_ensureMap(response.data));
+        return AdminLoginResponse.fromJson(_ensureMap(response.data));
       }
 
       throw _buildApiException(response, fallback: 'Registration failed');
@@ -39,7 +39,7 @@ class AuthApiClient {
   }
 
   /// Login as admin
-  Future<LoginResponse> loginAdmin(AdminLoginRequest request) async {
+  Future<AdminLoginResponse> loginAdmin(AdminLoginRequest request) async {
     try {
       final response = await _dio.post(
         '/api/v1/auth/admin/login',
@@ -47,7 +47,7 @@ class AuthApiClient {
       );
 
       if (_isSuccess(response.statusCode)) {
-        return LoginResponse.fromJson(_ensureMap(response.data));
+        return AdminLoginResponse.fromJson(_ensureMap(response.data));
       }
 
       throw _buildApiException(response, fallback: 'Login failed');
@@ -56,8 +56,10 @@ class AuthApiClient {
     }
   }
 
-  /// Login as collector (password only)
-  Future<LoginResponse> loginCollector(CollectorLoginRequest request) async {
+  /// Login as collector (name and password)
+  Future<CollectorLoginResponse> loginCollector(
+    CollectorLoginRequest request,
+  ) async {
     try {
       final response = await _dio.post(
         '/api/v1/auth/collector/login',
@@ -65,7 +67,7 @@ class AuthApiClient {
       );
 
       if (_isSuccess(response.statusCode)) {
-        return LoginResponse.fromJson(_ensureMap(response.data));
+        return CollectorLoginResponse.fromJson(_ensureMap(response.data));
       }
 
       throw _buildApiException(response, fallback: 'Login failed');

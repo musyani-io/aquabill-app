@@ -1,11 +1,8 @@
 from datetime import datetime, timedelta, timezone
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from typing import Optional, Dict, Any
 import os
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
@@ -15,12 +12,22 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt"""
-    return pwd_context.hash(password)
+    # Ensure password is a string
+    if not isinstance(password, str):
+        password = str(password)
+    password_bytes = password.strip().encode('utf-8')
+    if len(password_bytes) > 72:
+        raise ValueError(f"Password too long: {len(password_bytes)} bytes")
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    if not isinstance(plain_password, str):
+        plain_password = str(plain_password)
+    plain_password_bytes = plain_password.strip().encode('utf-8')
+    return bcrypt.checkpw(plain_password_bytes, hashed_password.encode('utf-8'))
 
 
 def create_access_token(

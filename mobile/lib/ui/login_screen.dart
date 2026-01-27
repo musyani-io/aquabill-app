@@ -42,29 +42,33 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text.trim();
       final authClient = AuthApiClient(baseUrl: Config.apiBaseUrl);
 
-      late LoginResponse response;
-
       if (_selectedRole == UserRole.admin) {
         // Admin login
         final request = AdminLoginRequest(
           username: username,
           password: password,
         );
-        response = await authClient.loginAdmin(request);
+        final response = await authClient.loginAdmin(request);
+
+        await AuthService().login(
+          token: response.token,
+          role: _selectedRole,
+          username: response.username,
+        );
       } else {
         // Collector login - name and password
         final request = CollectorLoginRequest(
           name: username,
           password: password,
         );
-        response = await authClient.loginCollector(request);
-      }
+        final response = await authClient.loginCollector(request);
 
-      await AuthService().login(
-        token: response.token,
-        role: _selectedRole,
-        username: response.name,
-      );
+        await AuthService().login(
+          token: response.token,
+          role: _selectedRole,
+          username: response.name,
+        );
+      }
 
       if (mounted) {
         // Navigate to home and remove login screen from stack
