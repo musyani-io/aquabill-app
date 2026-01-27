@@ -39,15 +39,6 @@ class AdminLoginRequest {
   Map<String, dynamic> toJson() => {'username': username, 'password': password};
 }
 
-/// DTO for collector login request
-class CollectorLoginRequest {
-  final String password;
-
-  CollectorLoginRequest({required this.password});
-
-  Map<String, dynamic> toJson() => {'password': password};
-}
-
 /// DTO for login response (admin or collector)
 class LoginResponse {
   final String token;
