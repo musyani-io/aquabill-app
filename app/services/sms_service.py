@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.repositories.sms import SMSRepository
 from app.schemas.sms import SMSMessageCreate, SMSMessageUpdate, SMSMessageResponse
 from app.models.sms import SMSMessage, SMSStatus, SMSDeliveryStatus
-from app.services.textbee_client import TextBeeClient
+from app.services.africastalking_client import AfricasTalkingClient
 
 
 class SMSService:
@@ -166,28 +166,14 @@ class SMSService:
         if db_sms.status not in [SMSStatus.PENDING]:
             return False, f"SMS {sms_id} status is {db_sms.status}, cannot send"
 
-        # Initialize TextBee client
-        textbee = TextBeeClient()
+        # Initialize Africa's Talking client
+        at_client = AfricasTalkingClient()
 
         # Normalize phone number
-        normalized_phone = textbee.normalize_phone_number(db_sms.phone_number)
+        normalized_phone = at_client._normalize_phone_number(db_sms.phone_number)
 
-        # Validate phone number
-        if not textbee.validate_phone_number(normalized_phone):
-            error_msg = f"Invalid phone number format: {db_sms.phone_number}"
-            self.record_failed(sms_id, error_msg)
-            self.repository.add_delivery_history(
-                sms_id=sms_id,
-                attempt_number=db_sms.retry_count + 1,
-                status=SMSDeliveryStatus.FAILED.value,
-                gateway_name="TextBee",
-                error_code="INVALID_PHONE",
-                error_message=error_msg,
-            )
-            return False, error_msg
-
-        # Send via TextBee
-        success, gateway_reference, response_data = await textbee.send_sms(
+        # Send via Africa's Talking
+        success, gateway_reference, response_data = await at_client.send_sms(
             phone_number=normalized_phone,
             message=db_sms.message_body,
             idempotency_key=db_sms.idempotency_key,
@@ -212,7 +198,7 @@ class SMSService:
                 sms_id=sms_id,
                 attempt_number=attempt_number,
                 status=SMSDeliveryStatus.SENT.value,
-                gateway_name="TextBee",
+                gateway_name="AfricasTalking",
                 gateway_response=json.dumps(response_data),
             )
 

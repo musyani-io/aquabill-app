@@ -2,7 +2,7 @@
 
 ## Overview
 
-Production-ready FastAPI backend covering client/meter lifecycle, billing cycles, readings, ledger-based accounting, SMS notifications (TextBee, Tanzania), anomaly/audit logging, exports, and archival.
+Production-ready FastAPI backend covering client/meter lifecycle, billing cycles, readings, ledger-based accounting, SMS notifications (Africa's Talking, Tanzania), anomaly/audit logging, exports, and archival.
 
 ## Architecture
 
@@ -24,15 +24,15 @@ Production-ready FastAPI backend covering client/meter lifecycle, billing cycles
 - **Penalties**: Manual apply/waive with notes; idempotent ledger entry creation
 - **Balances**: Derived from ledger (debits - credits) with breakdown (charges, penalties, payments, adjustments)
 
-## SMS (TextBee, Tanzania)
+## SMS (Africa's Talking, Tanzania)
 
-- Gateway client: `https://sms.textbee.ug/api/v1/send`
-- Phone handling: Tanzania formats (+255, 255, 0-leading), normalized to +255
+- Gateway client: `https://api.africastalking.com/version1/messaging`
+- Phone handling: Tanzania formats (+255, 255, 0-leading), normalized to +255XXXXXXXXX
 - Messages: balance alert, payment confirmation, penalty notice (TZS currency)
-- Idempotency: idempotency_key on SMS + X-Idempotency-Key in callbacks
+- Idempotency: idempotency_key on SMS
 - Retry policy: 0 min → 30 min → 4 hr (max 3 attempts)
 - Endpoints: queue, send now, callbacks (delivered/failed/bounced), retry scheduler, delivery history
-- Config: `AQUABILL_SMS_GATEWAY_URL`, `AQUABILL_SMS_GATEWAY_KEY`, `AQUABILL_SMS_SENDER_ID`
+- Config: `AQUABILL_SMS_GATEWAY_URL`, `AQUABILL_SMS_GATEWAY_KEY`, `AQUABILL_SMS_USERNAME`, `AQUABILL_SMS_SENDER_ID`
 
 ## Exports (CSV)
 
