@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> {
           ConflictsScreen(),
           SettingsScreen(),
         ];
-        _titles = const ['Capture', 'Admin', 'Conflicts', 'Settings'];
+        _titles = const ['Capture', 'Collectors', 'Conflicts', 'Settings'];
       } else {
         _pages = const [CaptureScreen(), ConflictsScreen(), SettingsScreen()];
         _titles = const ['Capture', 'Conflicts', 'Settings'];

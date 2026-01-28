@@ -184,7 +184,7 @@ def create_collector(
     db.commit()
     db.refresh(new_collector)
 
-    return CollectorResponse.from_orm(new_collector)
+    return CollectorResponse.model_validate(new_collector)
 
 
 @admin_router.get("/collectors", response_model=CollectorListResponse)
@@ -193,14 +193,13 @@ def list_collectors(
     db: Session = Depends(get_db),
 ):
     """Get all collectors for the current admin"""
-
     collectors = db.query(CollectorUser).filter(
         CollectorUser.admin_id == current_admin.id
     ).all()
 
     return CollectorListResponse(
         total=len(collectors),
-        collectors=[CollectorResponse.from_orm(c) for c in collectors]
+        collectors=[CollectorResponse.model_validate(c) for c in collectors]
     )
 
 

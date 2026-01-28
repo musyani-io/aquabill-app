@@ -35,7 +35,7 @@ def get_audit_log(audit_log_id: int, db: Session = Depends(get_db)):
     return audit_log
 
 
-@router.get("/admin/{admin_username}", response_model=List[AuditLogResponse])
+@router.get("/audit-logs/admin/{admin_username}", response_model=List[AuditLogResponse])
 def get_logs_by_admin(
     admin_username: str,
     skip: int = Query(0, ge=0),

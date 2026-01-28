@@ -85,9 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isOnline = await ConnectivityService().isOnline();
     if (!isOnline) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No internet connection')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No internet connection')));
       }
       return;
     }
@@ -122,9 +122,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } on NetworkException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Network error: ${e.message}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Network error: ${e.message}')));
       }
     } on ConflictException catch (e) {
       if (mounted) {
@@ -136,9 +136,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sync error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sync error: $e')));
       }
     } finally {
       if (mounted) {
@@ -153,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,8 +228,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               width: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Icon(Icons.sync),
@@ -320,7 +321,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                             Text(
-                              _userRole == UserRole.admin ? 'Admin' : 'Collector',
+                              _userRole == UserRole.admin
+                                  ? 'Admin'
+                                  : 'Collector',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
