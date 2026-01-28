@@ -85,7 +85,9 @@ class Conflict(Base):
     )
 
     # Detection
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     # Assignment tracking
     assigned_to = Column(
@@ -100,7 +102,10 @@ class Conflict(Base):
 
     # Timestamps
     updated_at = Column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     # Relationships

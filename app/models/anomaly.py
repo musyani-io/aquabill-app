@@ -82,7 +82,9 @@ class Anomaly(Base):
     )
 
     # Detection tracking
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     # Acknowledgement tracking
     acknowledged_at = Column(DateTime(timezone=True), nullable=True)
@@ -97,7 +99,10 @@ class Anomaly(Base):
 
     # Timestamps
     updated_at = Column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     # Relationships

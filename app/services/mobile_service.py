@@ -42,10 +42,7 @@ class MobileService:
         """
         # Get last 12 cycles (ordered newest first)
         all_cycles = (
-            self.db.query(Cycle)
-            .order_by(desc(Cycle.start_date))
-            .limit(12)
-            .all()
+            self.db.query(Cycle).order_by(desc(Cycle.start_date)).limit(12).all()
         )
         cycle_ids = [c.id for c in all_cycles]
 
@@ -91,10 +88,7 @@ class MobileService:
         """
         # Get cycles updated since timestamp (within last 12 cycles window)
         all_cycles = (
-            self.db.query(Cycle)
-            .order_by(desc(Cycle.start_date))
-            .limit(12)
-            .all()
+            self.db.query(Cycle).order_by(desc(Cycle.start_date)).limit(12).all()
         )
         cycle_ids = [c.id for c in all_cycles]
 
@@ -168,7 +162,9 @@ class MobileService:
             .filter(
                 and_(
                     Cycle.updated_at >= since,
-                    Cycle.status.in_([CycleStatus.CLOSED.value, CycleStatus.ARCHIVED.value]),
+                    Cycle.status.in_(
+                        [CycleStatus.CLOSED.value, CycleStatus.ARCHIVED.value]
+                    ),
                 )
             )
             .all()

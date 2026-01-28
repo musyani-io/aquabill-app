@@ -196,8 +196,12 @@ def test_updates_endpoint(sample_data):
     db.close()
 
     # Get updates since bootstrap (use slightly earlier timestamp)
-    since_param = dt.fromisoformat(last_sync.replace('Z', '+00:00')) - timedelta(seconds=1)
-    response = client.get(f"/api/v1/mobile/updates?since={since_param.isoformat()}", headers=headers)
+    since_param = dt.fromisoformat(last_sync.replace("Z", "+00:00")) - timedelta(
+        seconds=1
+    )
+    response = client.get(
+        f"/api/v1/mobile/updates?since={since_param.isoformat()}", headers=headers
+    )
 
     assert response.status_code == 200
     data = response.json()

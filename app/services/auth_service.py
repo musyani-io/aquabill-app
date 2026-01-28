@@ -15,7 +15,7 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 def generate_random_password(length: int = 12) -> str:
     """Generate a random password with uppercase, lowercase, digits, and special chars"""
     characters = string.ascii_letters + string.digits + "!@#$%^&*"
-    password = ''.join(secrets.choice(characters) for _ in range(length))
+    password = "".join(secrets.choice(characters) for _ in range(length))
     return password
 
 
@@ -24,24 +24,23 @@ def hash_password(password: str) -> str:
     # Ensure password is a string
     if not isinstance(password, str):
         password = str(password)
-    password_bytes = password.strip().encode('utf-8')
+    password_bytes = password.strip().encode("utf-8")
     if len(password_bytes) > 72:
         raise ValueError(f"Password too long: {len(password_bytes)} bytes")
     salt = bcrypt.gensalt(rounds=12)
-    return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
     if not isinstance(plain_password, str):
         plain_password = str(plain_password)
-    plain_password_bytes = plain_password.strip().encode('utf-8')
-    return bcrypt.checkpw(plain_password_bytes, hashed_password.encode('utf-8'))
+    plain_password_bytes = plain_password.strip().encode("utf-8")
+    return bcrypt.checkpw(plain_password_bytes, hashed_password.encode("utf-8"))
 
 
 def create_access_token(
-    data: Dict[str, Any],
-    expires_delta: Optional[timedelta] = None
+    data: Dict[str, Any], expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create JWT access token"""
     to_encode = data.copy()

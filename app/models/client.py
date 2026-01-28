@@ -1,4 +1,14 @@
-from sqlalchemy import Column, DateTime, Integer, String, UniqueConstraint, func, Index, Numeric, ForeignKey
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+    Index,
+    Numeric,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base

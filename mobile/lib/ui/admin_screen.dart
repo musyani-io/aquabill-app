@@ -19,7 +19,6 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _isLoading = true;
   final Map<int, bool> _passwordVisibility =
       {}; // Track password visibility per collector
-  bool _isResettingPassword = false;
   int? _resettingCollectorId;
 
   @override
