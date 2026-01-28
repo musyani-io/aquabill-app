@@ -82,22 +82,22 @@ class Anomaly(Base):
     )
 
     # Detection tracking
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     # Acknowledgement tracking
-    acknowledged_at = Column(DateTime, nullable=True)
+    acknowledged_at = Column(DateTime(timezone=True), nullable=True)
     acknowledged_by = Column(
         String(100), nullable=True, comment="Admin ID who acknowledged"
     )
 
     # Resolution tracking
-    resolved_at = Column(DateTime, nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
     resolved_by = Column(String(100), nullable=True, comment="Admin ID who resolved")
     resolution_notes = Column(String(500), nullable=True)
 
     # Timestamps
     updated_at = Column(
-        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
     # Relationships

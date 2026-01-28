@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field
+from datetime import datetime
+from decimal import Decimal
 
 
 class ClientBase(BaseModel):
@@ -8,7 +10,7 @@ class ClientBase(BaseModel):
     phone_number: str = Field(min_length=1, max_length=20)
     client_code: str | None = Field(default=None, max_length=50)
     meter_serial_number: str = Field(min_length=1, max_length=50)
-    initial_meter_reading: float = Field(ge=0)
+    initial_meter_reading: Decimal = Field(decimal_places=4)
 
 
 class ClientCreate(ClientBase):
@@ -27,6 +29,8 @@ class ClientUpdate(BaseModel):
 
 class ClientRead(ClientBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

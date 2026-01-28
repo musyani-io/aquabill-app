@@ -59,7 +59,7 @@ class LedgerEntry(Base):
         comment="True for credits (payments/adjustments)",
     )
     description = Column(String(500), nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     created_by = Column(
         String(100), nullable=False, comment="Admin/user who recorded this entry"
     )

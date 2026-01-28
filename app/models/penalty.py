@@ -48,12 +48,12 @@ class Penalty(Base):
     imposed_by = Column(
         String(100), nullable=False, comment="Admin who imposed the penalty"
     )
-    imposed_at = Column(DateTime, nullable=False, server_default=func.now())
-    waived_at = Column(DateTime, nullable=True)
+    imposed_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    waived_at = Column(DateTime(timezone=True), nullable=True)
     waived_by = Column(String(100), nullable=True)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
     # Relationships

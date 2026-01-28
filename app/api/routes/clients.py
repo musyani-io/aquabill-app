@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencies import get_current_admin
 from app.db.deps import get_db
@@ -17,8 +18,39 @@ def create_client(
     db: Session = Depends(get_db),
 ):
     """Create a new client (admin only)"""
-    service = ClientService(db)
-    return service.create(payload)
+    try:
+        service = ClientService(db)
+        return service.create(payload)
+    except IntegrityError as e:
+        db.rollback()
+        # Extract the constraint name from the error
+        error_detail = str(e.orig)
+        if "phone_number" in error_detail:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number already exists"
+            )
+        elif "meter_serial_number" in error_detail:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Meter serial number already exists"
+            )
+        elif "client_code" in error_detail:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Client code already exists"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Client with these details already exists"
+            )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create client: {str(e)}"
+        )
 
 
 @router.get("/{client_id}", response_model=ClientRead)

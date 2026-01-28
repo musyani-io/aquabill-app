@@ -162,12 +162,19 @@ class _AdminScreenState extends State<AdminScreen> {
                                         Text(
                                           showPassword
                                               ? (collector.plainPassword ??
-                                                    '••••••••')
+                                                    '(Reset password to view)')
                                               : '••••••••',
-                                          style: const TextStyle(
-                                            fontFamily: 'monospace',
+                                          style: TextStyle(
+                                            fontFamily:
+                                                collector.plainPassword != null
+                                                ? 'monospace'
+                                                : 'default',
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
+                                            color:
+                                                collector.plainPassword == null
+                                                ? Colors.grey[500]
+                                                : null,
                                           ),
                                         ),
                                       ],
@@ -184,8 +191,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                         ),
                                         onPressed: () {
                                           setState(() {
-                                            _passwordVisibility[
-                                                    collector.id] =
+                                            _passwordVisibility[collector.id] =
                                                 !showPassword;
                                           });
                                         },
@@ -224,26 +230,21 @@ class _AdminScreenState extends State<AdminScreen> {
                                   padding: const EdgeInsets.only(top: 8),
                                   child: ElevatedButton.icon(
                                     onPressed:
-                                        _resettingCollectorId ==
-                                                collector.id
-                                            ? null
-                                            : () =>
-                                                _resetCollectorPassword(
-                                                  collector.id,
-                                                ),
-                                    icon: _resettingCollectorId ==
-                                            collector.id
+                                        _resettingCollectorId == collector.id
+                                        ? null
+                                        : () => _resetCollectorPassword(
+                                            collector.id,
+                                          ),
+                                    icon: _resettingCollectorId == collector.id
                                         ? SizedBox(
                                             width: 16,
                                             height: 16,
-                                            child:
-                                                CircularProgressIndicator(
+                                            child: CircularProgressIndicator(
                                               strokeWidth: 2,
                                               valueColor:
-                                                  AlwaysStoppedAnimation<
-                                                      Color>(
-                                                Colors.blue[700]!,
-                                              ),
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.blue[700]!,
+                                                  ),
                                             ),
                                           )
                                         : const Icon(Icons.refresh),
@@ -508,13 +509,14 @@ class _AdminScreenState extends State<AdminScreen> {
       }
 
       final authClient = AuthApiClient(baseUrl: Config.apiBaseUrl);
-      final updatedCollector =
-          await authClient.resetCollectorPassword(token, collectorId);
+      final updatedCollector = await authClient.resetCollectorPassword(
+        token,
+        collectorId,
+      );
 
       if (mounted) {
         // Update the collector in the list
-        final index =
-            _collectors.indexWhere((c) => c.id == collectorId);
+        final index = _collectors.indexWhere((c) => c.id == collectorId);
         if (index != -1) {
           setState(() {
             _collectors[index] = updatedCollector;

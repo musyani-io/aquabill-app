@@ -261,15 +261,24 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                   TextFormField(
                                     controller: _initialReadingController,
                                     decoration: const InputDecoration(
-                                      labelText: 'Initial Meter Reading *',
+                                      labelText: 'Initial Meter Reading (m³) *',
+                                      hintText: '0.0000',
                                       border: OutlineInputBorder(),
                                     ),
-                                    keyboardType: TextInputType.number,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
                                     validator: (value) {
-                                      if (value?.isEmpty ?? true)
+                                      if (value?.isEmpty ?? true) {
                                         return 'Required';
-                                      if (double.tryParse(value!) == null) {
+                                      }
+                                      final number = double.tryParse(value!);
+                                      if (number == null) {
                                         return 'Invalid number';
+                                      }
+                                      if (number < 0) {
+                                        return 'Cannot be negative';
                                       }
                                       return null;
                                     },
@@ -454,7 +463,7 @@ class _ClientDetailView extends StatelessWidget {
         _DetailRow(label: 'Meter Serial', value: client.meterSerialNumber),
         _DetailRow(
           label: 'Initial Reading',
-          value: client.initialMeterReading.toString(),
+          value: client.formattedInitialReading,
         ),
         if (client.clientCode != null)
           _DetailRow(label: 'Client Code', value: client.clientCode!),

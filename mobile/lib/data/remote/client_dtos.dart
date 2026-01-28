@@ -74,6 +74,10 @@ class ClientResponse {
     }
     return '$firstName $surname';
   }
+
+  /// Format initial reading with 4 decimals and m³ unit
+  String get formattedInitialReading =>
+      '${initialMeterReading.toStringAsFixed(4)} m³';
 }
 
 /// DTO for clients list response

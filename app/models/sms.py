@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Boolean,
     NUMERIC,
+    func,
 )
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -94,8 +95,8 @@ class SMSMessage(Base):
     )  # Full gateway response for debugging
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    sent_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
 
     # Metadata
     error_reason = Column(Text, nullable=True)  # Why it failed

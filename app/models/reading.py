@@ -87,14 +87,14 @@ class Reading(Base):
 
     # Approval tracking
     approved = Column(Boolean, default=False, index=True)
-    approved_at = Column(DateTime, nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
     approved_by = Column(String(100), nullable=True, comment="Admin ID who approved")
     approval_notes = Column(String(500), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(
-        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
     # Relationships

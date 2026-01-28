@@ -156,10 +156,7 @@ class AuthApiClient {
         return CollectorResponse.fromJson(_ensureMap(response.data));
       }
 
-      throw _buildApiException(
-        response,
-        fallback: 'Failed to reset password',
-      );
+      throw _buildApiException(response, fallback: 'Failed to reset password');
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
