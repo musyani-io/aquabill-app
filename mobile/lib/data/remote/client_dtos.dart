@@ -63,10 +63,17 @@ class ClientResponse {
     phoneNumber: json['phone_number'] as String,
     clientCode: json['client_code'] as String?,
     meterSerialNumber: json['meter_serial_number'] as String,
-    initialMeterReading: (json['initial_meter_reading'] as num).toDouble(),
+    initialMeterReading: _parseReading(json['initial_meter_reading']),
     createdAt: DateTime.parse(json['created_at'] as String),
     updatedAt: DateTime.parse(json['updated_at'] as String),
   );
+
+  /// Parse reading value - handles both string and numeric formats
+  static double _parseReading(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.parse(value);
+    throw FormatException('Invalid reading value: $value');
+  }
 
   String get fullName {
     if (otherNames != null && otherNames!.isNotEmpty) {
