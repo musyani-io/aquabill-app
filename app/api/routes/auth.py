@@ -23,6 +23,7 @@ from app.services.auth_service import (
     create_access_token,
     decode_admin_token,
     decode_collector_token,
+    generate_random_password,
 )
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
@@ -198,6 +199,39 @@ def delete_collector(
 
     db.delete(collector)
     db.commit()
+
+
+@admin_router.post("/collectors/{collector_id}/reset-password", response_model=CollectorResponse)
+def reset_collector_password(
+    collector_id: int,
+    current_admin: AdminUser = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Reset a collector's password (generates new password, admin only)"""
+
+    # Get collector
+    collector = db.query(CollectorUser).filter(
+        CollectorUser.id == collector_id,
+        CollectorUser.admin_id == current_admin.id
+    ).first()
+
+    if not collector:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Collector not found"
+        )
+
+    # Generate new random password
+    new_password = generate_random_password()
+    collector.password_hash = hash_password(new_password)
+    
+    db.commit()
+    db.refresh(collector)
+
+    # Return collector with plain password
+    response = CollectorResponse.model_validate(collector)
+    response.plain_password = new_password
+    return response
 
 
 # ============ Collector Login (Public) ============

@@ -19,6 +19,8 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _isLoading = true;
   final Map<int, bool> _passwordVisibility =
       {}; // Track password visibility per collector
+  bool _isResettingPassword = false;
+  int? _resettingCollectorId;
 
   @override
   void initState() {
@@ -137,78 +139,125 @@ class _AdminScreenState extends State<AdminScreen> {
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Password',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      showPassword
-                                          ? (collector.plainPassword ??
-                                                '••••••••')
-                                          : '••••••••',
-                                      style: const TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Column(
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      showPassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: Colors.blue,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Password',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          showPassword
+                                              ? (collector.plainPassword ??
+                                                    '••••••••')
+                                              : '••••••••',
+                                          style: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _passwordVisibility[collector.id] =
-                                            !showPassword;
-                                      });
-                                    },
                                   ),
-                                  if (collector.plainPassword != null)
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.content_copy,
-                                        size: 20,
+                                  Column(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          showPassword
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _passwordVisibility[
+                                                    collector.id] =
+                                                !showPassword;
+                                          });
+                                        },
                                       ),
-                                      tooltip: 'Copy password',
-                                      onPressed: () {
-                                        Clipboard.setData(
-                                          ClipboardData(
-                                            text: collector.plainPassword!,
+                                      if (collector.plainPassword != null)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.content_copy,
+                                            size: 20,
                                           ),
-                                        );
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Password copied to clipboard',
-                                            ),
-                                            duration: Duration(seconds: 2),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                          tooltip: 'Copy password',
+                                          onPressed: () {
+                                            Clipboard.setData(
+                                              ClipboardData(
+                                                text: collector.plainPassword!,
+                                              ),
+                                            );
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Password copied to clipboard',
+                                                ),
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
+                              if (collector.plainPassword == null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: ElevatedButton.icon(
+                                    onPressed:
+                                        _resettingCollectorId ==
+                                                collector.id
+                                            ? null
+                                            : () =>
+                                                _resetCollectorPassword(
+                                                  collector.id,
+                                                ),
+                                    icon: _resettingCollectorId ==
+                                            collector.id
+                                        ? SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child:
+                                                CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<
+                                                      Color>(
+                                                Colors.blue[700]!,
+                                              ),
+                                            ),
+                                          )
+                                        : const Icon(Icons.refresh),
+                                    label: const Text('Reset Password'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.orange,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -436,6 +485,63 @@ class _AdminScreenState extends State<AdminScreen> {
             SnackBar(content: Text('Failed to delete collector: $e')),
           );
         }
+      }
+    }
+  }
+
+  Future<void> _resetCollectorPassword(int collectorId) async {
+    setState(() {
+      _resettingCollectorId = collectorId;
+    });
+
+    try {
+      final authService = AuthService();
+      final token = await authService.getToken();
+
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No authentication token found')),
+          );
+        }
+        return;
+      }
+
+      final authClient = AuthApiClient(baseUrl: Config.apiBaseUrl);
+      final updatedCollector =
+          await authClient.resetCollectorPassword(token, collectorId);
+
+      if (mounted) {
+        // Update the collector in the list
+        final index =
+            _collectors.indexWhere((c) => c.id == collectorId);
+        if (index != -1) {
+          setState(() {
+            _collectors[index] = updatedCollector;
+            _passwordVisibility[collectorId] = true; // Auto-show new password
+            _resettingCollectorId = null;
+          });
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _resettingCollectorId = null;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reset password: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

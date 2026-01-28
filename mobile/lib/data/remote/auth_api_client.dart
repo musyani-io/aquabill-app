@@ -141,6 +141,30 @@ class AuthApiClient {
     }
   }
 
+  /// Reset collector password (generates new password, admin only)
+  Future<CollectorResponse> resetCollectorPassword(
+    String token,
+    int collectorId,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/api/v1/admin/collectors/$collectorId/reset-password',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (_isSuccess(response.statusCode)) {
+        return CollectorResponse.fromJson(_ensureMap(response.data));
+      }
+
+      throw _buildApiException(
+        response,
+        fallback: 'Failed to reset password',
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   /// Handle DioException and convert to ApiException
   ApiException _handleDioError(DioException e) {
     String message = 'An error occurred';

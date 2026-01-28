@@ -8,7 +8,7 @@ from app.services.audit_log_service import AuditLogService
 from app.schemas.audit_log import AuditLogResponse
 from app.models.audit_log import AuditAction
 
-router = APIRouter()
+router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
 
 
 @router.get("/", response_model=List[AuditLogResponse])
@@ -35,7 +35,7 @@ def get_audit_log(audit_log_id: int, db: Session = Depends(get_db)):
     return audit_log
 
 
-@router.get("/audit-logs/admin/{admin_username}", response_model=List[AuditLogResponse])
+@router.get("/admin/{admin_username}", response_model=List[AuditLogResponse])
 def get_logs_by_admin(
     admin_username: str,
     skip: int = Query(0, ge=0),

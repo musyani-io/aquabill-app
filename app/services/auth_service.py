@@ -3,11 +3,20 @@ import bcrypt
 from jose import JWTError, jwt
 from typing import Optional, Dict, Any
 import os
+import secrets
+import string
 
 # JWT settings
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
+
+
+def generate_random_password(length: int = 12) -> str:
+    """Generate a random password with uppercase, lowercase, digits, and special chars"""
+    characters = string.ascii_letters + string.digits + "!@#$%^&*"
+    password = ''.join(secrets.choice(characters) for _ in range(length))
+    return password
 
 
 def hash_password(password: str) -> str:
