@@ -184,7 +184,10 @@ def create_collector(
     db.commit()
     db.refresh(new_collector)
 
-    return CollectorResponse.model_validate(new_collector)
+    # Return with plain password so admin can see it
+    response = CollectorResponse.model_validate(new_collector)
+    response.plain_password = request.password  # Include plain password in creation response
+    return response
 
 
 @admin_router.get("/collectors", response_model=CollectorListResponse)

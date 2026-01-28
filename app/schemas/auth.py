@@ -79,6 +79,7 @@ class CollectorResponse(BaseModel):
     name: str
     is_active: bool
     created_at: datetime
+    plain_password: str | None = None  # Only set when collector is first created
 
     class Config:
         from_attributes = True
