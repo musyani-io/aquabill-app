@@ -12,7 +12,7 @@ String formatDateTime(DateTime dateTime) {
   final offsetHours = offset.inHours;
   final offsetMinutes = (offset.inMinutes % 60).abs();
   final sign = offset.isNegative ? '-' : '+';
-  
+
   return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
       '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')} '
       '$sign${offsetHours.toString().padLeft(2, '0')}:${offsetMinutes.toString().padLeft(2, '0')}';
@@ -481,10 +481,7 @@ class _ClientDetailView extends StatelessWidget {
         ),
         if (client.clientCode != null)
           _DetailRow(label: 'Client Code', value: client.clientCode!),
-        _DetailRow(
-          label: 'Created',
-          value: formatDateTime(client.createdAt),
-        ),
+        _DetailRow(label: 'Created', value: formatDateTime(client.createdAt)),
         if (isAdmin) ...[
           const SizedBox(height: 12),
           SizedBox(

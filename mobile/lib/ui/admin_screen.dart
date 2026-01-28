@@ -69,7 +69,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final offsetHours = offset.inHours;
     final offsetMinutes = (offset.inMinutes % 60).abs();
     final sign = offset.isNegative ? '-' : '+';
-    
+
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')} '
         '$sign${offsetHours.toString().padLeft(2, '0')}:${offsetMinutes.toString().padLeft(2, '0')}';
