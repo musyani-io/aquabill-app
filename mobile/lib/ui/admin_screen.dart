@@ -61,6 +61,20 @@ class _AdminScreenState extends State<AdminScreen> {
     }
   }
 
+  /// Format DateTime with timezone information
+  String _formatDateTime(DateTime dateTime) {
+    // Format: YYYY-MM-DD HH:MM:SS +/-HH:MM
+    final date = dateTime.toLocal();
+    final offset = dateTime.timeZoneOffset;
+    final offsetHours = offset.inHours;
+    final offsetMinutes = (offset.inMinutes % 60).abs();
+    final sign = offset.isNegative ? '-' : '+';
+    
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')} '
+        '$sign${offsetHours.toString().padLeft(2, '0')}:${offsetMinutes.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -112,7 +126,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                           ),
                                         ),
                                         Text(
-                                          'Added: ${collector.createdAt.toString().split('.')[0]}',
+                                          'Added: ${_formatDateTime(collector.createdAt)}',
                                           style: TextStyle(
                                             color: Colors.grey[600],
                                             fontSize: 12,

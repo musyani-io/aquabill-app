@@ -4,6 +4,20 @@ import '/core/config.dart';
 import '/data/remote/client_api_client.dart';
 import '/data/remote/client_dtos.dart';
 
+/// Format DateTime with timezone information
+/// Format: YYYY-MM-DD HH:MM:SS +/-HH:MM
+String formatDateTime(DateTime dateTime) {
+  final date = dateTime.toLocal();
+  final offset = dateTime.timeZoneOffset;
+  final offsetHours = offset.inHours;
+  final offsetMinutes = (offset.inMinutes % 60).abs();
+  final sign = offset.isNegative ? '-' : '+';
+  
+  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+      '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')} '
+      '$sign${offsetHours.toString().padLeft(2, '0')}:${offsetMinutes.toString().padLeft(2, '0')}';
+}
+
 class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
 
@@ -469,7 +483,7 @@ class _ClientDetailView extends StatelessWidget {
           _DetailRow(label: 'Client Code', value: client.clientCode!),
         _DetailRow(
           label: 'Created',
-          value: client.createdAt.toString().split('.')[0],
+          value: formatDateTime(client.createdAt),
         ),
         if (isAdmin) ...[
           const SizedBox(height: 12),
