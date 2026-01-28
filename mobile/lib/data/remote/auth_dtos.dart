@@ -136,12 +136,15 @@ class CollectorResponse {
   final String name;
   final bool isActive;
   final DateTime createdAt;
+  final String?
+  plainPassword; // Plain password only returned when collector is created
 
   CollectorResponse({
     required this.id,
     required this.name,
     required this.isActive,
     required this.createdAt,
+    this.plainPassword,
   });
 
   factory CollectorResponse.fromJson(Map<String, dynamic> json) =>
@@ -150,6 +153,7 @@ class CollectorResponse {
         name: json['name'] as String,
         isActive: json['is_active'] as bool,
         createdAt: DateTime.parse(json['created_at'] as String),
+        plainPassword: json['plain_password'] as String?,
       );
 }
 

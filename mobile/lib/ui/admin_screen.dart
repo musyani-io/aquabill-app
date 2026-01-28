@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/auth_service.dart';
 import '../core/config.dart';
@@ -7,7 +8,7 @@ import '../data/remote/auth_dtos.dart';
 
 /// Admin screen for managing collectors
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({Key? key}) : super(key: key);
+  const AdminScreen({super.key});
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
@@ -16,6 +17,8 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   List<CollectorResponse> _collectors = [];
   bool _isLoading = true;
+  final Map<int, bool> _passwordVisibility =
+      {}; // Track password visibility per collector
 
   @override
   void initState() {
@@ -27,7 +30,7 @@ class _AdminScreenState extends State<AdminScreen> {
     try {
       final authService = AuthService();
       final token = await authService.getToken();
-      
+
       if (token == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -59,9 +62,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
@@ -72,20 +73,146 @@ class _AdminScreenState extends State<AdminScreen> {
               itemCount: _collectors.length,
               itemBuilder: (context, index) {
                 final collector = _collectors[index];
+                final showPassword = _passwordVisibility[collector.id] ?? false;
                 return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Text(
-                        collector.name[0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    title: Text(collector.name),
-                    subtitle: Text('Added: ${collector.createdAt.toString().split('.')[0]}'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteCollector(index, collector.id),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Collector name and delete button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: Colors.blue,
+                                    child: Text(
+                                      collector.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          collector.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Added: ${collector.createdAt.toString().split('.')[0]}',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () =>
+                                  _deleteCollector(index, collector.id),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Password section
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Password',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      showPassword
+                                          ? (collector.plainPassword ??
+                                                '••••••••')
+                                          : '••••••••',
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      showPassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                      color: Colors.blue,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _passwordVisibility[collector.id] =
+                                            !showPassword;
+                                      });
+                                    },
+                                  ),
+                                  if (collector.plainPassword != null)
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.content_copy,
+                                        size: 20,
+                                      ),
+                                      tooltip: 'Copy password',
+                                      onPressed: () {
+                                        Clipboard.setData(
+                                          ClipboardData(
+                                            text: collector.plainPassword!,
+                                          ),
+                                        );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Password copied to clipboard',
+                                            ),
+                                            duration: Duration(seconds: 2),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -105,25 +232,21 @@ class _AdminScreenState extends State<AdminScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.people_outline,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.people_outline, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No Collectors Yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap the button below to add your first collector',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[500],
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
           ),
         ],
       ),
@@ -252,9 +375,9 @@ class _AdminScreenState extends State<AdminScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add collector: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to add collector: $e')));
       }
     }
   }
@@ -304,9 +427,7 @@ class _AdminScreenState extends State<AdminScreen> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Collector "$collectorName" deleted'),
-            ),
+            SnackBar(content: Text('Collector "$collectorName" deleted')),
           );
         }
       } catch (e) {

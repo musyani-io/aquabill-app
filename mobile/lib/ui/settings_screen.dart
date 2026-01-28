@@ -28,7 +28,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final TextEditingController _tokenController = TextEditingController();
   bool _loading = true;
   bool _syncing = false;
   int _pendingCount = 0;
@@ -48,7 +47,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _load() async {
-    final token = await TokenStorage().getToken();
     final pending = await _syncQueueDao.pendingCount();
     final lastSyncStr = await _db.getMetadata('last_sync');
     final deviceId = await DeviceIdHelper().getDeviceId();
@@ -56,7 +54,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final username = await AuthService().getUsername();
     final userRole = await AuthService().getUserRole();
     setState(() {
-      _tokenController.text = token ?? '';
       _pendingCount = pending;
       _lastSync = lastSyncStr != null ? DateTime.parse(lastSyncStr) : null;
       _deviceId = deviceId;
@@ -69,19 +66,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
-    _tokenController.dispose();
     super.dispose();
   }
 
   Future<void> _runSync() async {
-    final token = _tokenController.text.trim();
-    if (token.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter and save a token first')),
-      );
-      return;
-    }
-
     final isOnline = await ConnectivityService().isOnline();
     if (!isOnline) {
       if (mounted) {
@@ -97,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final apiClient = MobileApiClient(
         baseUrl: 'http://localhost:8000',
-        tokenProvider: () async => token,
+        tokenProvider: () async => (await TokenStorage().getToken()) ?? '',
       );
 
       final engine = SyncEngine(
@@ -158,33 +146,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Authentication',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _tokenController,
-            decoration: const InputDecoration(
-              labelText: 'Bearer token',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 2,
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.save),
-            label: const Text('Save token'),
-            onPressed: () async {
-              await TokenStorage().saveToken(_tokenController.text.trim());
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Token saved securely')),
-                );
-              }
-            },
-          ),
-          const SizedBox(height: 16),
           const Text(
             'Sync preferences',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
