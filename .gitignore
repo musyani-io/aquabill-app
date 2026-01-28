@@ -1,4 +1,10 @@
-# Personal 
+# Deployment configs (often contain secrets)
+render.yaml
+docker-compose.override.yml
+.env.production
+.env.production.local
+
+# Personal
 imp_stuffs
 
 # Environment variables and secrets
@@ -8,7 +14,11 @@ imp_stuffs
 .env.*.secret
 *.key
 *.pem
+*.crt
+*.cer
 credentials.json
+google-services.json
+GoogleService-Info.plist
 
 # Virtual environments
 .venv
@@ -44,17 +54,45 @@ wheels/
 htmlcov/
 .tox/
 *.cover
+.venv/Coverage/
 
 # Logs
 *.log
 logs/
+test-results/
 
 # Database
 *.db
 *.db*
 *.sqlite
 *.sqlite3
+migrations/versions/__pycache__/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# IDE misc
+.vscode/launch.json
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+
+# Flutter/Dart build and cache
+mobile/.dart_tool/
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/.pub-cache/
+mobile/.packages
+mobile/pubspec.lock
+mobile/.metadata
+
+# Python linting caches
+.ruff_cache/
+.mypy_cache/
+.pylint.d/
