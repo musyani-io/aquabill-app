@@ -279,9 +279,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                                     onPressed: _loading ? null : _createClient,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.blue,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
+                                      padding: const EdgeInsets.all(12.0),
                                     ),
                                     child: _loading
                                         ? const SizedBox(

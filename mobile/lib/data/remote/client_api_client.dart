@@ -47,7 +47,7 @@ class ClientApiClient {
   ) async {
     try {
       final response = await _dio.post(
-        '/api/v1/clients',
+        '/api/v1/clients/',
         data: request.toJson(),
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -84,7 +84,7 @@ class ClientApiClient {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/v1/clients',
+        '/api/v1/clients/',
         queryParameters: {'skip': skip, 'limit': limit},
       );
 
