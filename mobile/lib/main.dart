@@ -7,6 +7,7 @@ import 'data/local/daos/sync_queue_dao.dart';
 import 'domain/sync/background_sync_service.dart';
 import 'ui/admin_screen.dart';
 import 'ui/capture_screen.dart';
+import 'ui/clients_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/settings_screen.dart';
@@ -114,16 +115,30 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isAdmin = isAdmin;
       if (_isAdmin) {
+        // Admin: 5 pages
         _pages = const [
           CaptureScreen(),
+          ClientsScreen(),
           AdminScreen(),
           ConflictsScreen(),
           SettingsScreen(),
         ];
-        _titles = const ['Capture', 'Collectors', 'Conflicts', 'Settings'];
+        _titles = const [
+          'Capture',
+          'Clients',
+          'Collectors',
+          'Conflicts',
+          'Settings',
+        ];
       } else {
-        _pages = const [CaptureScreen(), ConflictsScreen(), SettingsScreen()];
-        _titles = const ['Capture', 'Conflicts', 'Settings'];
+        // Collector: 4 pages
+        _pages = const [
+          CaptureScreen(),
+          ClientsScreen(),
+          ConflictsScreen(),
+          SettingsScreen(),
+        ];
+        _titles = const ['Capture', 'Clients', 'Conflicts', 'Settings'];
       }
       _isLoadingRole = false;
     });
@@ -160,7 +175,7 @@ class _HomePageState extends State<HomePage> {
             ),
         ],
       ),
-      body: (_isAdmin && _index == 3) || (!_isAdmin && _index == 2)
+      body: (_isAdmin && _index == 4) || (!_isAdmin && _index == 3)
           ? SettingsScreen(onSyncComplete: _refreshPendingCount)
           : _pages[_index],
       bottomNavigationBar: NavigationBar(
@@ -174,9 +189,14 @@ class _HomePageState extends State<HomePage> {
                   label: 'Capture',
                 ),
                 NavigationDestination(
+                  icon: Icon(Icons.people_outlined),
+                  selectedIcon: Icon(Icons.people),
+                  label: 'Clients',
+                ),
+                NavigationDestination(
                   icon: Icon(Icons.admin_panel_settings_outlined),
                   selectedIcon: Icon(Icons.admin_panel_settings),
-                  label: 'Admin',
+                  label: 'Collectors',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.warning_amber_outlined),
@@ -194,6 +214,11 @@ class _HomePageState extends State<HomePage> {
                   icon: Icon(Icons.edit_note_outlined),
                   selectedIcon: Icon(Icons.edit_note),
                   label: 'Capture',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.people_outlined),
+                  selectedIcon: Icon(Icons.people),
+                  label: 'Clients',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.warning_amber_outlined),

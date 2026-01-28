@@ -1,4 +1,5 @@
-from sqlalchemy import Column, DateTime, Integer, String, UniqueConstraint, func, Index
+from sqlalchemy import Column, DateTime, Integer, String, UniqueConstraint, func, Index, Float, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -8,6 +9,7 @@ class Client(Base):
     __table_args__ = (
         UniqueConstraint("phone_number", name="uq_clients_phone_number"),
         UniqueConstraint("client_code", name="uq_clients_client_code"),
+        UniqueConstraint("meter_serial_number", name="uq_clients_meter_serial"),
         Index("ix_clients_name", "first_name", "surname"),
     )
 
@@ -17,6 +19,8 @@ class Client(Base):
     surname = Column(String(100), nullable=False)
     phone_number = Column(String(20), nullable=False)
     client_code = Column(String(50), nullable=True)
+    meter_serial_number = Column(String(50), nullable=False, unique=True)
+    initial_meter_reading = Column(Float, nullable=False)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

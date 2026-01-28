@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_admin
 from app.db.deps import get_db
 from app.schemas.client import ClientCreate, ClientRead, ClientUpdate
 from app.services.client_service import ClientService
@@ -10,7 +11,12 @@ router = APIRouter(prefix="/clients", tags=["clients"])
 
 
 @router.post("/", response_model=ClientRead, status_code=status.HTTP_201_CREATED)
-def create_client(payload: ClientCreate, db: Session = Depends(get_db)):
+def create_client(
+    payload: ClientCreate,
+    current_admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Create a new client (admin only)"""
     service = ClientService(db)
     return service.create(payload)
 

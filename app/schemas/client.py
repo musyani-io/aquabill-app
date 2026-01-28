@@ -7,6 +7,8 @@ class ClientBase(BaseModel):
     surname: str = Field(min_length=1, max_length=100)
     phone_number: str = Field(min_length=1, max_length=20)
     client_code: str | None = Field(default=None, max_length=50)
+    meter_serial_number: str = Field(min_length=1, max_length=50)
+    initial_meter_reading: float = Field(ge=0)
 
 
 class ClientCreate(ClientBase):
@@ -19,6 +21,8 @@ class ClientUpdate(BaseModel):
     surname: str | None = Field(default=None, max_length=100)
     phone_number: str | None = Field(default=None, max_length=20)
     client_code: str | None = Field(default=None, max_length=50)
+    meter_serial_number: str | None = Field(default=None, max_length=50)
+    initial_meter_reading: float | None = Field(default=None, ge=0)
 
 
 class ClientRead(ClientBase):

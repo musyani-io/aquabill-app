@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import Optional
 
 from app.db.deps import get_db
+from app.api.dependencies import get_current_admin
 from app.models.auth import AdminUser, CollectorUser
 from app.schemas.auth import (
     AdminRegisterRequest,
@@ -26,37 +27,6 @@ from app.services.auth_service import (
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 admin_router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
-
-
-# ============ Helper Functions ============
-
-def _extract_token(authorization: Optional[str]) -> str:
-    """Extract token from Authorization header"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization header"
-        )
-    return authorization[7:]  # Remove "Bearer " prefix
-
-
-def get_current_admin(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> AdminUser:
-    """Dependency to get current authenticated admin"""
-    token = _extract_token(authorization)
-    admin_id = decode_admin_token(token)
-    if not admin_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
-        )
-
-    admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
-    if not admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin not found"
-        )
-    return admin
 
 
 # ============ Admin Routes ============
