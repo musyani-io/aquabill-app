@@ -169,7 +169,7 @@ Clients receive notifications
 
 - ✅ Clients, meters, meter assignments with constraints
 - ✅ Billing cycles with non-overlapping date validation
-- ✅ Readings with 4-decimal precision (NUMERIC 9,4)
+- ✅ Readings with 4-decimal precision (NUMERIC 10,4)
 - ✅ Anomalies and conflicts tracking
 - ✅ Ledger entries, payments, penalties
 - ✅ Audit log (immutable, write-only)
@@ -214,6 +214,8 @@ Clients receive notifications
 - ✅ Device identification (platform-specific IDs)
 - ✅ Bearer token authentication
 - ✅ Sync status indicator (pending uploads count)
+- ✅ Timezone-aware timestamps (backend, database, frontend)
+- ✅ Password reset for collectors (anytime by admin)
 
 #### Backend API
 
@@ -336,7 +338,7 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for AWS, GCP, and Docker Compose op
 
 **Precision:**
 
-- Readings: `NUMERIC(9,4)` → max 99,999.9999 m³
+- Readings: `NUMERIC(10,4)` → max 999,999.9999 m³
 - Money: `NUMERIC(12,2)` → max 9,999,999,999.99 TZS
 
 **Indexes:** Optimized for reads on `(meter_assignment_id, cycle_id)`, `(client_id, created_at)`, etc.
@@ -366,7 +368,6 @@ See [docs/guideline.md](docs/guideline.md) for full schema documentation.
 ### Backend
 
 - **SMS Retry:** Currently synchronous. TODO: Move to background task queue (Celery/RQ).
-- **JWT Auth:** Placeholder for admin endpoints. TODO: Implement full JWT flow.
 
 See [docs/TODOs.md](docs/TODOs.md) for complete issue tracking.
 
@@ -454,4 +455,4 @@ Built for small-to-medium water utilities in Tanzania to digitize meter reading 
 
 **Version:** 1.0.0  
 **Last Updated:** January 2026  
-**Status:** Phase 5 Complete ✅ | Phase 6 In Progress 🚧
+**Status:** Phase 5 Complete ✅ | Phase 6 Planned 📋
