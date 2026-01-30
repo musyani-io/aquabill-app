@@ -14,6 +14,7 @@ from app.repositories.reading import ReadingRepository
 from app.repositories.meter_assignment import MeterAssignmentRepository
 from app.repositories.cycle import CycleRepository
 from app.repositories.anomaly import AnomalyRepository
+from app.services.anomaly_service import AnomalyService
 
 
 class ReadingService:
@@ -33,6 +34,7 @@ class ReadingService:
         self.assignment_repository = MeterAssignmentRepository(db)
         self.cycle_repository = CycleRepository(db)
         self.anomaly_repository = AnomalyRepository(db)
+        self.anomaly_service = AnomalyService(db)
 
     def submit_reading(
         self,
@@ -152,6 +154,20 @@ class ReadingService:
                     description=f"Meter reading decreased from {prev_reading.absolute_value} to {absolute_value}. Possible rollover.",
                 )
                 anomalies.append(anomaly)
+
+        # ============ Check rollover threshold (>= 90,000) ============
+        # Get meter serial from assignment
+        meter_serial = assignment.meter.serial_number if assignment.meter else "UNKNOWN"
+        # Check and log threshold alert if reading >= 90,000
+        threshold_anomaly = self.anomaly_service.check_and_log_rollover_threshold(
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading.id,
+            meter_serial=meter_serial,
+            absolute_value=Decimal(absolute_value),
+        )
+        if threshold_anomaly:
+            anomalies.append(threshold_anomaly)
 
         return reading, None
 
@@ -299,6 +315,20 @@ class ReadingService:
             has_rollover=has_rollover,
             approval_notes=approval_notes or "",
         )
+
+        # ============ Check rollover threshold (>= 90,000) ============
+        # Get meter assignment and meter serial
+        assignment = self.assignment_repository.get(reading.meter_assignment_id)
+        if assignment and assignment.meter:
+            meter_serial = assignment.meter.serial_number
+            # Check and log threshold alert if reading >= 90,000
+            self.anomaly_service.check_and_log_rollover_threshold(
+                meter_assignment_id=reading.meter_assignment_id,
+                cycle_id=reading.cycle_id,
+                reading_id=reading.id,
+                meter_serial=meter_serial,
+                absolute_value=Decimal(reading.absolute_value),
+            )
 
         return approved, None
 

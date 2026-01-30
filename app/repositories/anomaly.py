@@ -103,3 +103,24 @@ class AnomalyRepository:
             self.db.commit()
             self.db.refresh(anomaly)
         return anomaly
+
+    def get_unacknowledged_threshold_alert(
+        self, meter_assignment_id: int
+    ) -> Optional[Anomaly]:
+        """
+        Check if there's an existing unacknowledged rollover threshold alert.
+        
+        Returns the first DETECTED (not yet acknowledged) METER_ROLLOVER_THRESHOLD
+        anomaly for the given meter assignment.
+        
+        Used to prevent duplicate threshold alerts.
+        """
+        return (
+            self.db.query(Anomaly)
+            .filter(
+                Anomaly.meter_assignment_id == meter_assignment_id,
+                Anomaly.anomaly_type == AnomalyType.METER_ROLLOVER_THRESHOLD.value,
+                Anomaly.status == AnomalyStatus.DETECTED.value,
+            )
+            .first()
+        )

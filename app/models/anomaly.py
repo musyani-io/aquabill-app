@@ -30,6 +30,9 @@ class AnomalyType(str, enum.Enum):
     ROLLOVER_WITHOUT_LIMIT = (
         "ROLLOVER_WITHOUT_LIMIT"  # Rollover detected but meter max unknown
     )
+    METER_ROLLOVER_THRESHOLD = (
+        "METER_ROLLOVER_THRESHOLD"  # Meter reading >= 90,000 (approaching rollover)
+    )
 
 
 class AnomalyStatus(str, enum.Enum):
@@ -113,7 +116,7 @@ class Anomaly(Base):
     __table_args__ = (
         CheckConstraint(
             "anomaly_type IN ('NEGATIVE_CONSUMPTION', 'DOUBLE_SUBMISSION', 'LATE_SUBMISSION', "
-            "'MISSING_BASELINE', 'MISSING_READING', 'ROLLOVER_WITHOUT_LIMIT')",
+            "'MISSING_BASELINE', 'MISSING_READING', 'ROLLOVER_WITHOUT_LIMIT', 'METER_ROLLOVER_THRESHOLD')",
             name="ck_anomaly_type_valid",
         ),
         CheckConstraint(

@@ -193,3 +193,88 @@ class AnomalyService:
             cycle_id=cycle_id,
             severity="CRITICAL",
         )
+
+    def log_meter_rollover_threshold(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        reading_id: int,
+        meter_serial: str,
+        absolute_value: Decimal,
+    ) -> Anomaly:
+        """
+        Log meter reading approaching rollover threshold (>= 90,000).
+        
+        Alert persists until acknowledged by admin or meter is replaced.
+        Admin acknowledgment indicates awareness and planning for meter replacement.
+        
+        Args:
+            meter_assignment_id: Current meter assignment
+            cycle_id: Cycle where threshold was reached
+            reading_id: Reading that triggered the alert
+            meter_serial: Meter serial number for identification
+            absolute_value: Current meter reading value
+        
+        Returns:
+            Created anomaly record with CRITICAL severity
+        """
+        description = (
+            f"Meter {meter_serial} has reached rollover threshold alert at {absolute_value:.4f} m³ "
+            f"(threshold: 90,000.0000). Meter approaching maximum capacity. "
+            f"Admin acknowledgment required to confirm awareness and plan for meter replacement."
+        )
+        return self.create_anomaly(
+            anomaly_type=AnomalyType.METER_ROLLOVER_THRESHOLD.value,
+            description=description,
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading_id,
+            severity="CRITICAL",
+        )
+
+    def check_and_log_rollover_threshold(
+        self,
+        meter_assignment_id: int,
+        cycle_id: int,
+        reading_id: int,
+        meter_serial: str,
+        absolute_value: Decimal,
+        threshold: Decimal = Decimal("90000.0000"),
+    ) -> Optional[Anomaly]:
+        """
+        Check if reading exceeds rollover threshold and log alert if needed.
+        
+        Only creates ONE alert per meter assignment until acknowledged.
+        If an unacknowledged alert already exists, returns None (no duplicate).
+        
+        Args:
+            meter_assignment_id: Current meter assignment
+            cycle_id: Cycle where reading was submitted
+            reading_id: Reading ID that triggered check
+            meter_serial: Meter serial for identification
+            absolute_value: Current meter reading value
+            threshold: Rollover warning threshold (default: 90,000)
+        
+        Returns:
+            Anomaly if alert was created, None if below threshold or alert already exists
+        """
+        # Check if reading exceeds threshold
+        if absolute_value < threshold:
+            return None
+
+        # Check for existing unacknowledged alert
+        existing_alert = self.repository.get_unacknowledged_threshold_alert(
+            meter_assignment_id
+        )
+        if existing_alert:
+            # Alert already exists, don't create duplicate
+            return None
+
+        # Create new alert
+        return self.log_meter_rollover_threshold(
+            meter_assignment_id=meter_assignment_id,
+            cycle_id=cycle_id,
+            reading_id=reading_id,
+            meter_serial=meter_serial,
+            absolute_value=absolute_value,
+        )
