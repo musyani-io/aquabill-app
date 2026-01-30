@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'api_exception.dart';
 
 /// Data transfer objects for Ledger API
 
@@ -283,14 +284,4 @@ class LedgerApiClient {
       return ApiException('Request failed: ${e.message}');
     }
   }
-}
-
-/// Simple API exception class
-class ApiException implements Exception {
-  final String message;
-
-  ApiException(this.message);
-
-  @override
-  String toString() => message;
 }

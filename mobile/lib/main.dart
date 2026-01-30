@@ -14,6 +14,8 @@ import 'ui/conflicts_screen.dart';
 import 'ui/cycle_management_screen.dart';
 import 'ui/ledger_entries_screen.dart';
 import 'ui/login_screen.dart';
+import 'ui/meter_rollover_screen.dart';
+import 'ui/payment_recording_screen.dart';
 import 'ui/reading_approvals_screen.dart';
 import 'ui/settings_screen.dart';
 
@@ -195,6 +197,32 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const LedgerEntriesScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.payment),
+                title: const Text('Record Payment'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PaymentRecordingScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.warning),
+                title: const Text('Meter Rollovers'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const MeterRolloverScreen(),
                     ),
                   );
                 },

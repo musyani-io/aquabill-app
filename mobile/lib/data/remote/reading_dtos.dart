@@ -96,3 +96,52 @@ class RejectReadingRequest {
     return {'rejected_by': rejectedBy, 'rejection_reason': rejectionReason};
   }
 }
+class VerifyRolloverRequest {
+  final String verifiedBy;
+  final bool isGenuineRollover;
+  final String? notes;
+
+  VerifyRolloverRequest({
+    required this.verifiedBy,
+    required this.isGenuineRollover,
+    this.notes,
+  });
+
+  Map<String, String> toQueryParams() {
+    final params = <String, String>{
+      'verified_by': verifiedBy,
+      'is_genuine_rollover': isGenuineRollover.toString(),
+    };
+
+    if (notes != null && notes!.isNotEmpty) {
+      params['notes'] = notes!;
+    }
+
+    return params;
+  }
+}
+
+class RejectRolloverRequest {
+  final String rejectedBy;
+  final String reason;
+  final String? notes;
+
+  RejectRolloverRequest({
+    required this.rejectedBy,
+    required this.reason,
+    this.notes,
+  });
+
+  Map<String, String> toQueryParams() {
+    final params = <String, String>{
+      'rejected_by': rejectedBy,
+      'reason': reason,
+    };
+
+    if (notes != null && notes!.isNotEmpty) {
+      params['notes'] = notes!;
+    }
+
+    return params;
+  }
+}

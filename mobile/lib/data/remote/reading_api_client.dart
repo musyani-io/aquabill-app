@@ -109,6 +109,67 @@ class ReadingApiClient {
     }
   }
 
+  /// Get readings with rollover flag
+  Future<List<ReadingResponse>> getRolloversForReview() async {
+    try {
+      final response = await _dio.get('/readings/pending');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data
+            .map((json) => ReadingResponse.fromJson(json))
+            .where((reading) => reading.hasRollover)
+            .toList();
+      } else {
+        throw ApiException('Failed to fetch rollovers: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Verify a rollover reading (confirm genuine rollover)
+  Future<ReadingResponse> verifyRollover(
+    int readingId,
+    VerifyRolloverRequest request,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/readings/$readingId/verify-rollover',
+        queryParameters: request.toQueryParams(),
+      );
+
+      if (response.statusCode == 200) {
+        return ReadingResponse.fromJson(response.data);
+      } else {
+        throw ApiException('Failed to verify rollover: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Reject rollover claim (mark as meter fault or false positive)
+  Future<Map<String, dynamic>> rejectRollover(
+    int readingId,
+    RejectRolloverRequest request,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/readings/$readingId/reject-rollover',
+        queryParameters: request.toQueryParams(),
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw ApiException('Failed to reject rollover: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   ApiException _handleDioError(DioException e) {
     if (e.response != null) {
       final statusCode = e.response!.statusCode;
