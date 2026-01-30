@@ -12,6 +12,7 @@ import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/cycle_management_screen.dart';
+import 'ui/ledger_entries_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/reading_approvals_screen.dart';
 import 'ui/settings_screen.dart';
@@ -185,6 +186,19 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const Divider(height: 1),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.receipt_long),
+                title: const Text('Ledger'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LedgerEntriesScreen(),
+                    ),
+                  );
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),

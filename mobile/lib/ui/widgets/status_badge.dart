@@ -59,6 +59,26 @@ class StatusBadge extends StatelessWidget {
         };
       case 'REJECTED':
         return {'background': Colors.red.shade50, 'text': Colors.red.shade700};
+      
+      // Ledger entry types
+      case 'CHARGE':
+        return {
+          'background': Colors.orange.shade50,
+          'text': Colors.orange.shade700,
+        };
+      case 'PAYMENT':
+        return {
+          'background': Colors.green.shade50,
+          'text': Colors.green.shade700,
+        };
+      case 'PENALTY':
+        return {'background': Colors.red.shade50, 'text': Colors.red.shade700};
+      case 'ADJUSTMENT':
+        return {
+          'background': Colors.purple.shade50,
+          'text': Colors.purple.shade700,
+        };
+      
       default:
         return {
           'background': Colors.grey.shade100,
@@ -69,6 +89,7 @@ class StatusBadge extends StatelessWidget {
 
   String _getStatusDisplayName(String status) {
     switch (status.toUpperCase()) {
+      // Cycle/Reading statuses
       case 'OPEN':
         return 'Open';
       case 'PENDING_REVIEW':
@@ -83,6 +104,17 @@ class StatusBadge extends StatelessWidget {
         return 'Archived';
       case 'REJECTED':
         return 'Rejected';
+      
+      // Ledger entry types
+      case 'CHARGE':
+        return 'Charge';
+      case 'PAYMENT':
+        return 'Payment';
+      case 'PENALTY':
+        return 'Penalty';
+      case 'ADJUSTMENT':
+        return 'Adjustment';
+      
       default:
         return status;
     }
