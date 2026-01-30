@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'core/auth_service.dart';
+import 'core/providers.dart';
 import 'data/local/daos/sync_queue_dao.dart';
 import 'domain/sync/background_sync_service.dart';
 import 'ui/admin_screen.dart';
@@ -24,10 +26,24 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
+  // Initialize providers
+  final themeProvider = ThemeProvider();
+  final languageProvider = LanguageProvider();
+  await themeProvider.initialize();
+  await languageProvider.initialize();
+
   // Initialize background sync service
   await BackgroundSyncService().initialize();
 
-  runApp(const AquaBillApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: themeProvider),
+        ChangeNotifierProvider.value(value: languageProvider),
+      ],
+      child: const AquaBillApp(),
+    ),
+  );
 }
 
 class AquaBillApp extends StatelessWidget {
@@ -35,12 +51,12 @@ class AquaBillApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
       title: 'AquaBill',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppThemeHelper.buildLightTheme(),
+      darkTheme: AppThemeHelper.buildDarkTheme(),
+      themeMode: themeProvider.themeMode,
       home: const AuthWrapper(),
       routes: {
         '/login': (context) => const LoginScreen(),
@@ -141,6 +157,87 @@ class _HomePageState extends State<HomePage> {
     _loadPendingCount();
   }
 
+  Widget _buildDrawer(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'AquaBill',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        SettingsScreen(onSyncComplete: _refreshPendingCount),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.brightness_4),
+              title: const Text('Theme'),
+              trailing: PopupMenuButton<ThemeMode>(
+                initialValue: themeProvider.themeMode,
+                onSelected: (ThemeMode mode) async {
+                  await themeProvider.setThemeMode(mode);
+                },
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<ThemeMode>>[
+                      const PopupMenuItem<ThemeMode>(
+                        value: ThemeMode.light,
+                        child: Text('Light'),
+                      ),
+                      const PopupMenuItem<ThemeMode>(
+                        value: ThemeMode.dark,
+                        child: Text('Dark'),
+                      ),
+                      const PopupMenuItem<ThemeMode>(
+                        value: ThemeMode.system,
+                        child: Text('System'),
+                      ),
+                    ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: const Text('Language'),
+              trailing: PopupMenuButton<String>(
+                initialValue: languageProvider.languageCode,
+                onSelected: (String code) async {
+                  await languageProvider.setLanguage(code);
+                },
+                itemBuilder: (BuildContext context) => languageProvider
+                    .supportedLanguages
+                    .map<PopupMenuEntry<String>>((String code) {
+                      return PopupMenuItem<String>(
+                        value: code,
+                        child: Text(languageProvider.getLanguageName(code)),
+                      );
+                    })
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoadingRole) {
@@ -163,36 +260,7 @@ class _HomePageState extends State<HomePage> {
             ),
         ],
       ),
-      drawer: Drawer(
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'AquaBill',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Settings'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          SettingsScreen(onSyncComplete: _refreshPendingCount),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
+      drawer: _buildDrawer(context),
       body: _pages[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
