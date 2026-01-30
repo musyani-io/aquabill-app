@@ -11,6 +11,7 @@ import 'ui/admin_screen.dart';
 import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
 import 'ui/conflicts_screen.dart';
+import 'ui/cycle_management_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/reading_approvals_screen.dart';
 import 'ui/settings_screen.dart';
@@ -132,11 +133,12 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isAdmin = isAdmin;
       if (_isAdmin) {
-        // Admin: 5 pages (added Reading Approvals)
+        // Admin: 6 pages (Capture, Clients, Approvals, Cycles, Collectors, Conflicts)
         _pages = const [
           CaptureScreen(),
           ClientsScreen(),
           ReadingApprovalsScreen(),
+          CycleManagementScreen(),
           AdminScreen(),
           ConflictsScreen(),
         ];
@@ -144,6 +146,7 @@ class _HomePageState extends State<HomePage> {
           'Capture',
           'Clients',
           'Approvals',
+          'Cycles',
           'Collectors',
           'Conflicts',
         ];
@@ -284,6 +287,16 @@ class _HomePageState extends State<HomePage> {
                   icon: Icon(Icons.people_outlined),
                   selectedIcon: Icon(Icons.people),
                   label: 'Clients',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.check_circle_outline),
+                  selectedIcon: Icon(Icons.check_circle),
+                  label: 'Approvals',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  selectedIcon: Icon(Icons.calendar_month),
+                  label: 'Cycles',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.admin_panel_settings_outlined),
