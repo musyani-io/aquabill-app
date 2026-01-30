@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../data/remote/ledger_api_client.dart';
 import '../core/auth_service.dart';
+import '../core/error_handler.dart';
 import 'widgets/status_badge.dart';
 
 class LedgerEntriesScreen extends StatefulWidget {
