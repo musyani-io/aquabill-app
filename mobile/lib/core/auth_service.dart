@@ -1,10 +1,8 @@
+import 'config.dart';
 import 'token_storage.dart';
 
 /// User roles in the system
-enum UserRole {
-  admin,
-  collector,
-}
+enum UserRole { admin, collector }
 
 /// Authentication service for login and role management
 class AuthService {
@@ -37,7 +35,7 @@ class AuthService {
   Future<UserRole?> getUserRole() async {
     final roleStr = await _storage.getCustom('user_role');
     if (roleStr == null) return null;
-    
+
     switch (roleStr) {
       case 'admin':
         return UserRole.admin;
@@ -56,6 +54,12 @@ class AuthService {
   /// Get current authentication token
   Future<String?> getToken() async {
     return await _storage.getToken();
+  }
+
+  /// Get API base URL
+  Future<String> getBaseUrl() async {
+    // For now, return the static config. In future, could be dynamic per user.
+    return Config.apiBaseUrl;
   }
 
   /// Logout

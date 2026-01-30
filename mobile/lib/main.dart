@@ -12,6 +12,7 @@ import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/login_screen.dart';
+import 'ui/reading_approvals_screen.dart';
 import 'ui/settings_screen.dart';
 
 void main() async {
@@ -131,14 +132,21 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isAdmin = isAdmin;
       if (_isAdmin) {
-        // Admin: 4 pages
+        // Admin: 5 pages (added Reading Approvals)
         _pages = const [
           CaptureScreen(),
           ClientsScreen(),
+          ReadingApprovalsScreen(),
           AdminScreen(),
           ConflictsScreen(),
         ];
-        _titles = const ['Capture', 'Clients', 'Collectors', 'Conflicts'];
+        _titles = const [
+          'Capture',
+          'Clients',
+          'Approvals',
+          'Collectors',
+          'Conflicts',
+        ];
       } else {
         // Collector: 3 pages
         _pages = const [CaptureScreen(), ClientsScreen(), ConflictsScreen()];
