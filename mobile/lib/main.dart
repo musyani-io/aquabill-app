@@ -115,30 +115,18 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isAdmin = isAdmin;
       if (_isAdmin) {
-        // Admin: 5 pages
+        // Admin: 4 pages
         _pages = const [
           CaptureScreen(),
           ClientsScreen(),
           AdminScreen(),
           ConflictsScreen(),
-          SettingsScreen(),
         ];
-        _titles = const [
-          'Capture',
-          'Clients',
-          'Collectors',
-          'Conflicts',
-          'Settings',
-        ];
+        _titles = const ['Capture', 'Clients', 'Collectors', 'Conflicts'];
       } else {
-        // Collector: 4 pages
-        _pages = const [
-          CaptureScreen(),
-          ClientsScreen(),
-          ConflictsScreen(),
-          SettingsScreen(),
-        ];
-        _titles = const ['Capture', 'Clients', 'Conflicts', 'Settings'];
+        // Collector: 3 pages
+        _pages = const [CaptureScreen(), ClientsScreen(), ConflictsScreen()];
+        _titles = const ['Capture', 'Clients', 'Conflicts'];
       }
       _isLoadingRole = false;
     });
@@ -175,9 +163,37 @@ class _HomePageState extends State<HomePage> {
             ),
         ],
       ),
-      body: (_isAdmin && _index == 4) || (!_isAdmin && _index == 3)
-          ? SettingsScreen(onSyncComplete: _refreshPendingCount)
-          : _pages[_index],
+      drawer: Drawer(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'AquaBill',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Settings'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SettingsScreen(onSyncComplete: _refreshPendingCount),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: _pages[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
@@ -203,11 +219,6 @@ class _HomePageState extends State<HomePage> {
                   selectedIcon: Icon(Icons.warning_amber),
                   label: 'Conflicts',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: 'Settings',
-                ),
               ]
             : const [
                 NavigationDestination(
@@ -224,11 +235,6 @@ class _HomePageState extends State<HomePage> {
                   icon: Icon(Icons.warning_amber_outlined),
                   selectedIcon: Icon(Icons.warning_amber),
                   label: 'Conflicts',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: 'Settings',
                 ),
               ],
       ),
