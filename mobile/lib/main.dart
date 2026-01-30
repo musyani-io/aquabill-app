@@ -8,6 +8,7 @@ import 'core/providers.dart';
 import 'data/local/daos/sync_queue_dao.dart';
 import 'domain/sync/background_sync_service.dart';
 import 'ui/admin_screen.dart';
+import 'ui/baseline_reading_validation_screen.dart';
 import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
 import 'ui/conflicts_screen.dart';
@@ -223,6 +224,19 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const MeterRolloverScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.badge),
+                title: const Text('Baseline Readings'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const BaselineReadingValidationScreen(),
                     ),
                   );
                 },

@@ -138,9 +138,9 @@ class _MeterRolloverScreenState extends State<MeterRolloverScreen> {
             const SizedBox(height: 8),
             Text(
               'All meter readings are within expected range',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
             ),
           ],
         ),
@@ -192,7 +192,10 @@ class _MeterRolloverScreenState extends State<MeterRolloverScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade700,
                     borderRadius: BorderRadius.circular(4),
@@ -254,10 +257,7 @@ class _MeterRolloverScreenState extends State<MeterRolloverScreen> {
                 ),
                 child: Text(
                   'Notes: ${reading.submissionNotes}',
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                 ),
               ),
               const SizedBox(height: 12),
@@ -316,10 +316,7 @@ class _RolloverResolutionDialogState extends State<_RolloverResolutionDialog> {
         notes: _notesController.text.isEmpty ? null : _notesController.text,
       );
 
-      await widget.readingApiClient.verifyRollover(
-        widget.reading.id,
-        request,
-      );
+      await widget.readingApiClient.verifyRollover(widget.reading.id, request);
 
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -354,10 +351,7 @@ class _RolloverResolutionDialogState extends State<_RolloverResolutionDialog> {
         notes: _notesController.text.isEmpty ? null : _notesController.text,
       );
 
-      await widget.readingApiClient.rejectRollover(
-        widget.reading.id,
-        request,
-      );
+      await widget.readingApiClient.rejectRollover(widget.reading.id, request);
 
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -452,18 +446,22 @@ class _RolloverResolutionDialogState extends State<_RolloverResolutionDialog> {
               subtitle: const Text('Meter physically rolled over'),
               value: true,
               groupValue: _isGenuineRollover,
-              onChanged: _isSubmitting ? null : (value) {
-                setState(() => _isGenuineRollover = value ?? true);
-              },
+              onChanged: _isSubmitting
+                  ? null
+                  : (value) {
+                      setState(() => _isGenuineRollover = value ?? true);
+                    },
             ),
             RadioListTile<bool>(
               title: const Text('Meter Fault'),
               subtitle: const Text('Meter was replaced or malfunctioned'),
               value: false,
               groupValue: _isGenuineRollover,
-              onChanged: _isSubmitting ? null : (value) {
-                setState(() => _isGenuineRollover = value ?? true);
-              },
+              onChanged: _isSubmitting
+                  ? null
+                  : (value) {
+                      setState(() => _isGenuineRollover = value ?? true);
+                    },
             ),
             const SizedBox(height: 16),
             const Text(
@@ -496,9 +494,7 @@ class _RolloverResolutionDialogState extends State<_RolloverResolutionDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(
-                  _isGenuineRollover ? 'Confirm Rollover' : 'Mark as Fault',
-                ),
+              : Text(_isGenuineRollover ? 'Confirm Rollover' : 'Mark as Fault'),
         ),
       ],
     );

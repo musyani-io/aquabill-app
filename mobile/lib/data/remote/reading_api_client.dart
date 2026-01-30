@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'api_exception.dart';
 import 'reading_dtos.dart';
 
 class ReadingApiClient {
@@ -189,13 +190,4 @@ class ReadingApiClient {
       return ApiException('Network error: ${e.message}');
     }
   }
-}
-
-class ApiException implements Exception {
-  final String message;
-
-  ApiException(this.message);
-
-  @override
-  String toString() => message;
 }

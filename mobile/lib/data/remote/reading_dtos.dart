@@ -96,6 +96,7 @@ class RejectReadingRequest {
     return {'rejected_by': rejectedBy, 'rejection_reason': rejectionReason};
   }
 }
+
 class VerifyRolloverRequest {
   final String verifiedBy;
   final bool isGenuineRollover;
