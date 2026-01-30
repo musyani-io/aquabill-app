@@ -81,7 +81,9 @@ class BalanceResponse {
       totalDebits: (json['total_debits'] as num).toDouble(),
       totalCredits: (json['total_credits'] as num).toDouble(),
       netBalance: (json['net_balance'] as num).toDouble(),
-      breakdown: BalanceBreakdown.fromJson(json['breakdown'] as Map<String, dynamic>),
+      breakdown: BalanceBreakdown.fromJson(
+        json['breakdown'] as Map<String, dynamic>,
+      ),
     );
   }
 }
@@ -149,14 +151,14 @@ class LedgerApiClient {
   final Dio _dio;
 
   LedgerApiClient(String baseUrl, String token)
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: baseUrl,
-            headers: {'Authorization': 'Bearer $token'},
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
-          ),
-        );
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: baseUrl,
+          headers: {'Authorization': 'Bearer $token'},
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
 
   /// List all ledger entries (with optional filters)
   Future<List<LedgerEntryResponse>> listLedgerEntries({
@@ -166,10 +168,7 @@ class LedgerApiClient {
     int? cycleId,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'skip': skip,
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'skip': skip, 'limit': limit};
       if (meterAssignmentId != null) {
         queryParams['meter_assignment_id'] = meterAssignmentId;
       }
@@ -177,13 +176,23 @@ class LedgerApiClient {
         queryParams['cycle_id'] = cycleId;
       }
 
-      final response = await _dio.get('/billing/ledger', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/billing/ledger',
+        queryParameters: queryParams,
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List<dynamic>;
-        return data.map((json) => LedgerEntryResponse.fromJson(json as Map<String, dynamic>)).toList();
+        return data
+            .map(
+              (json) =>
+                  LedgerEntryResponse.fromJson(json as Map<String, dynamic>),
+            )
+            .toList();
       } else {
-        throw ApiException('Failed to fetch ledger entries: ${response.statusCode}');
+        throw ApiException(
+          'Failed to fetch ledger entries: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -196,9 +205,13 @@ class LedgerApiClient {
       final response = await _dio.get('/billing/ledger/$entryId');
 
       if (response.statusCode == 200) {
-        return LedgerEntryResponse.fromJson(response.data as Map<String, dynamic>);
+        return LedgerEntryResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
       } else {
-        throw ApiException('Failed to fetch ledger entry: ${response.statusCode}');
+        throw ApiException(
+          'Failed to fetch ledger entry: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -206,14 +219,23 @@ class LedgerApiClient {
   }
 
   /// Create a new ledger entry (manual adjustment)
-  Future<LedgerEntryResponse> createLedgerEntry(CreateLedgerEntryRequest request) async {
+  Future<LedgerEntryResponse> createLedgerEntry(
+    CreateLedgerEntryRequest request,
+  ) async {
     try {
-      final response = await _dio.post('/billing/ledger', data: request.toJson());
+      final response = await _dio.post(
+        '/billing/ledger',
+        data: request.toJson(),
+      );
 
       if (response.statusCode == 201) {
-        return LedgerEntryResponse.fromJson(response.data as Map<String, dynamic>);
+        return LedgerEntryResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
       } else {
-        throw ApiException('Failed to create ledger entry: ${response.statusCode}');
+        throw ApiException(
+          'Failed to create ledger entry: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       throw _handleDioError(e);

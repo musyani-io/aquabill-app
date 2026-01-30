@@ -630,6 +630,7 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
   final _numCyclesController = TextEditingController(text: '12');
   final _cycleLengthController = TextEditingController(text: '30');
   final _windowDaysController = TextEditingController(text: '5');
+  bool _adjustToWorkingDay = true;
   bool _isSubmitting = false;
 
   @override
@@ -670,6 +671,7 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
         numCycles: int.parse(_numCyclesController.text),
         cycleLengthDays: int.parse(_cycleLengthController.text),
         submissionWindowDays: int.parse(_windowDaysController.text),
+        adjustToWorkingDay: _adjustToWorkingDay,
       );
 
       final cycles = await widget.apiClient.scheduleCycles(request);
@@ -678,7 +680,9 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${cycles.length} cycles scheduled successfully'),
+            content: Text(
+              '${cycles.length} cycles scheduled successfully${_adjustToWorkingDay ? ' (with working day adjustment)' : ''}',
+            ),
           ),
         );
       }
@@ -726,7 +730,6 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
                 ),
               ),
               const SizedBox(height: 16),
-
               const Text(
                 'Number of Cycles',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -747,7 +750,6 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
                 },
               ),
               const SizedBox(height: 16),
-
               const Text(
                 'Cycle Length (days)',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -768,7 +770,6 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
                 },
               ),
               const SizedBox(height: 16),
-
               const Text(
                 'Submission Window (days)',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -787,6 +788,43 @@ class _ScheduleCyclesDialogState extends State<_ScheduleCyclesDialog> {
                   if (num == null || num < 1) return 'Must be at least 1';
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CheckboxListTile(
+                      value: _adjustToWorkingDay,
+                      onChanged: (value) {
+                        setState(() => _adjustToWorkingDay = value ?? true);
+                      },
+                      title: const Text(
+                        'Adjust to Working Day',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    if (_adjustToWorkingDay)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32, top: 8),
+                        child: Text(
+                          'Target dates falling on weekends or holidays will be automatically moved to the previous working day',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

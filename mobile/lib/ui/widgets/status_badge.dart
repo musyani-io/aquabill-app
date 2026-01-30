@@ -59,7 +59,7 @@ class StatusBadge extends StatelessWidget {
         };
       case 'REJECTED':
         return {'background': Colors.red.shade50, 'text': Colors.red.shade700};
-      
+
       // Ledger entry types
       case 'CHARGE':
         return {
@@ -78,7 +78,7 @@ class StatusBadge extends StatelessWidget {
           'background': Colors.purple.shade50,
           'text': Colors.purple.shade700,
         };
-      
+
       default:
         return {
           'background': Colors.grey.shade100,
@@ -104,7 +104,7 @@ class StatusBadge extends StatelessWidget {
         return 'Archived';
       case 'REJECTED':
         return 'Rejected';
-      
+
       // Ledger entry types
       case 'CHARGE':
         return 'Charge';
@@ -114,7 +114,7 @@ class StatusBadge extends StatelessWidget {
         return 'Penalty';
       case 'ADJUSTMENT':
         return 'Adjustment';
-      
+
       default:
         return status;
     }

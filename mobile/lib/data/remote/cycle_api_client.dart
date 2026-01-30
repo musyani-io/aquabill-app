@@ -87,12 +87,14 @@ class ScheduleCyclesRequest {
   final int numCycles;
   final int cycleLengthDays;
   final int submissionWindowDays;
+  final bool adjustToWorkingDay;
 
   ScheduleCyclesRequest({
     required this.startDate,
     required this.numCycles,
     this.cycleLengthDays = 30,
     this.submissionWindowDays = 5,
+    this.adjustToWorkingDay = true,
   });
 
   Map<String, dynamic> toJson() {
@@ -101,6 +103,7 @@ class ScheduleCyclesRequest {
       'num_cycles': numCycles,
       'cycle_length_days': cycleLengthDays,
       'submission_window_days': submissionWindowDays,
+      'adjust_to_working_day': adjustToWorkingDay,
     };
   }
 }

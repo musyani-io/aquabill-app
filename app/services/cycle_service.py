@@ -11,6 +11,7 @@ from app.repositories.cycle import CycleRepository
 from app.repositories.reading import ReadingRepository
 from app.repositories.ledger_entry import LedgerEntryRepository
 from app.models.ledger_entry import LedgerEntryType
+from app.utils.working_days import adjust_target_date_to_working_day
 
 
 class CycleService:
@@ -97,9 +98,10 @@ class CycleService:
         num_cycles: int,
         cycle_length_days: int,
         submission_window_days: int,
+        adjust_to_working_day: bool = True,
     ) -> Tuple[List[Cycle], Optional[str]]:
         """
-        Batch create multiple cycles on schedule.
+        Batch create multiple cycles on schedule in Tanzania.
 
         SCHEDULER: Call this to create a series of billing cycles.
 
@@ -108,10 +110,15 @@ class CycleService:
             num_cycles: How many cycles to create
             cycle_length_days: Each cycle is this many days (e.g., 30 for monthly)
             submission_window_days: Days after cycle end for reading submission
+            adjust_to_working_day: If True, adjust target_date to previous working day
+                                    if it falls on weekend/holiday (default: True)
 
         Example:
             Jan 1-30 (cycle 1), Feb 1-28 (cycle 2), Mar 1-31 (cycle 3), etc.
             submission_window_days=5 means readings due 5 days after cycle end
+            
+            If target_date falls on Saturday, it's automatically moved to Friday.
+            Admin can manually override this when creating cycles.
 
         Returns:
             (list of created cycles, error message if any failed)
@@ -126,6 +133,12 @@ class CycleService:
             cycle_start = current_start
             cycle_end = current_start + timedelta(days=cycle_length_days - 1)
             submission_deadline = cycle_end + timedelta(days=submission_window_days)
+
+            # Adjust target date to working day if enabled
+            if adjust_to_working_day:
+                submission_deadline = adjust_target_date_to_working_day(
+                    submission_deadline, prefer="previous"
+                )
 
             # Create cycle (all scheduled cycles start in OPEN state)
             cycle, error = self.create_cycle(

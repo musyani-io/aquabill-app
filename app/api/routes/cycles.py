@@ -15,7 +15,7 @@ from app.models.cycle import CycleStatus
 
 
 class ScheduleCyclesRequest(BaseModel):
-    """Request to batch create cycles on schedule"""
+    """Request to batch create cycles on schedule for Tanzania"""
 
     start_date: date
     num_cycles: int = Query(
@@ -24,6 +24,9 @@ class ScheduleCyclesRequest(BaseModel):
     cycle_length_days: int = Query(30, ge=1, le=365, description="Days per cycle")
     submission_window_days: int = Query(
         5, ge=0, le=30, description="Days after cycle end for reading submission"
+    )
+    adjust_to_working_day: bool = Query(
+        True, description="If true, adjust target_date to previous working day if it falls on weekend/holiday"
     )
 
 
@@ -58,17 +61,24 @@ def create_cycle(cycle_data: CycleCreate, db: Session = Depends(get_db)):
 )
 def schedule_cycles(request: ScheduleCyclesRequest, db: Session = Depends(get_db)):
     """
-    Batch create multiple billing cycles on schedule.
+    Batch create multiple billing cycles on schedule for Tanzania.
 
     SCHEDULER: Use this to create a series of cycles for the year.
+    
+    Working Day Adjustment:
+    - If adjust_to_working_day=true (default), target dates that fall on 
+      weekends or holidays are automatically moved to the previous working day
+    - Example: If submission deadline falls on Saturday, it's moved to Friday
+    - Admin can override this when creating individual cycles
 
     Example:
-        POST /schedule
+        POST /cycles/schedule
         {
             "start_date": "2026-01-01",
             "num_cycles": 12,
             "cycle_length_days": 30,
-            "submission_window_days": 5
+            "submission_window_days": 5,
+            "adjust_to_working_day": true
         }
     """
     service = CycleService(db)
@@ -77,6 +87,7 @@ def schedule_cycles(request: ScheduleCyclesRequest, db: Session = Depends(get_db
         num_cycles=request.num_cycles,
         cycle_length_days=request.cycle_length_days,
         submission_window_days=request.submission_window_days,
+        adjust_to_working_day=request.adjust_to_working_day,
     )
 
     if error:

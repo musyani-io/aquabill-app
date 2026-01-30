@@ -102,7 +102,10 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Balance error: ${e.message}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Balance error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       setState(() => _isLoadingBalance = false);
@@ -151,7 +154,10 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
 
     final balance = _balance!;
     final isDebit = balance.netBalance > 0;
-    final currencyFormat = NumberFormat.currency(symbol: 'KSh ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      symbol: 'KSh ',
+      decimalDigits: 2,
+    );
 
     return Card(
       margin: const EdgeInsets.all(12),
@@ -173,25 +179,44 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: isDebit ? Colors.red.shade700 : Colors.green.shade700,
+                    color: isDebit
+                        ? Colors.red.shade700
+                        : Colors.green.shade700,
                   ),
                 ),
               ],
             ),
             const Divider(height: 20),
-            _buildBalanceRow('Total Debits', balance.totalDebits, Colors.red.shade700),
+            _buildBalanceRow(
+              'Total Debits',
+              balance.totalDebits,
+              Colors.red.shade700,
+            ),
             const SizedBox(height: 4),
-            _buildBalanceRow('Total Credits', balance.totalCredits, Colors.green.shade700),
+            _buildBalanceRow(
+              'Total Credits',
+              balance.totalCredits,
+              Colors.green.shade700,
+            ),
             const Divider(height: 20),
-            const Text('Breakdown:', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Breakdown:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             _buildBreakdownRow('Charges', balance.breakdown.charges),
             _buildBreakdownRow('Penalties', balance.breakdown.penalties),
             _buildBreakdownRow('Payments', balance.breakdown.payments),
             if (balance.breakdown.adjustmentsDebit > 0)
-              _buildBreakdownRow('Debit Adjustments', balance.breakdown.adjustmentsDebit),
+              _buildBreakdownRow(
+                'Debit Adjustments',
+                balance.breakdown.adjustmentsDebit,
+              ),
             if (balance.breakdown.adjustmentsCredit > 0)
-              _buildBreakdownRow('Credit Adjustments', balance.breakdown.adjustmentsCredit),
+              _buildBreakdownRow(
+                'Credit Adjustments',
+                balance.breakdown.adjustmentsCredit,
+              ),
           ],
         ),
       ),
@@ -199,14 +224,21 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
   }
 
   Widget _buildBalanceRow(String label, double amount, Color color) {
-    final currencyFormat = NumberFormat.currency(symbol: 'KSh ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      symbol: 'KSh ',
+      decimalDigits: 2,
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(fontSize: 14)),
         Text(
           currencyFormat.format(amount),
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
         ),
       ],
     );
@@ -214,7 +246,10 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
 
   Widget _buildBreakdownRow(String label, double amount) {
     if (amount == 0) return const SizedBox.shrink();
-    final currencyFormat = NumberFormat.currency(symbol: 'KSh ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      symbol: 'KSh ',
+      decimalDigits: 2,
+    );
     return Padding(
       padding: const EdgeInsets.only(left: 16, top: 2),
       child: Row(
@@ -247,10 +282,7 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
             const SizedBox(height: 16),
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadData,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _loadData, child: const Text('Retry')),
           ],
         ),
       );
@@ -263,7 +295,10 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
           children: [
             Icon(Icons.receipt_long, size: 48, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No ledger entries found', style: TextStyle(color: Colors.grey)),
+            Text(
+              'No ledger entries found',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -283,7 +318,10 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
 
   Widget _buildLedgerCard(LedgerEntryResponse entry) {
     final dateFormat = DateFormat('MMM dd, yyyy HH:mm');
-    final currencyFormat = NumberFormat.currency(symbol: 'KSh ', decimalDigits: 2);
+    final currencyFormat = NumberFormat.currency(
+      symbol: 'KSh ',
+      decimalDigits: 2,
+    );
     final isDebit = !entry.isCredit;
 
     return Card(
@@ -305,20 +343,23 @@ class _LedgerEntriesScreenState extends State<LedgerEntriesScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDebit ? Colors.red.shade700 : Colors.green.shade700,
+                    color: isDebit
+                        ? Colors.red.shade700
+                        : Colors.green.shade700,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              entry.description,
-              style: const TextStyle(fontSize: 14),
-            ),
+            Text(entry.description, style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade600),
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: Colors.grey.shade600,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   dateFormat.format(entry.createdAt),

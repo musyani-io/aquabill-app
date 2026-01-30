@@ -10,4 +10,4 @@ httpx>=0.26
 pytest>=8.0
 pytest-asyncio>=0.23
 passlib[bcrypt]>=1.7.4
-python-jose[cryptography]>=3.3.0
+python-jose[cryptography]>=3.3.0holidays>=0.35
