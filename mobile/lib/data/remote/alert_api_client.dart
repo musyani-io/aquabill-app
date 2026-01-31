@@ -251,12 +251,9 @@ class AlertApiClient {
         }
       }
 
-      return ApiException(
-        message: message,
-        statusCode: error.response?.statusCode,
-      );
+      return ApiException(message);
     }
 
-    return ApiException(message: error.toString());
+    return ApiException(error.toString());
   }
 }
