@@ -21,12 +21,14 @@ class CycleRepository:
         end_date: date,
         target_date: date,
         status: CycleStatus = CycleStatus.OPEN,
+        proposed_target_date: Optional[date] = None,
     ) -> Cycle:
         """Create a new cycle"""
         cycle = Cycle(
             start_date=start_date,
             end_date=end_date,
             target_date=target_date,
+            proposed_target_date=proposed_target_date,
             status=status.value,
         )
         self.db.add(cycle)

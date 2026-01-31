@@ -11,6 +11,9 @@ from app.repositories.cycle import CycleRepository
 from app.repositories.reading import ReadingRepository
 from app.repositories.ledger_entry import LedgerEntryRepository
 from app.models.ledger_entry import LedgerEntryType
+from app.models.audit_log import AuditAction
+from app.repositories.audit_log import AuditLogRepository
+from app.schemas.audit_log import AuditLogCreate
 from app.utils.working_days import adjust_target_date_to_working_day
 
 
@@ -31,6 +34,7 @@ class CycleService:
         self.db = db
         self.reading_repository = ReadingRepository(db)
         self.ledger_repository = LedgerEntryRepository(db)
+        self.audit_log_repository = AuditLogRepository(db)
 
     def create_cycle(
         self,
@@ -38,6 +42,7 @@ class CycleService:
         end_date: date,
         target_date: date,
         status: CycleStatus = CycleStatus.OPEN,
+        proposed_target_date: Optional[date] = None,
     ) -> Tuple[Optional[Cycle], Optional[str]]:
         """
         Create a new cycle with non-overlap validation.
@@ -46,6 +51,13 @@ class CycleService:
         1. Check for overlapping cycles (dates cannot overlap)
         2. Check for existing OPEN cycle (only one OPEN allowed)
         3. Create cycle in OPEN state
+
+        Args:
+            start_date: Cycle start date
+            end_date: Cycle end date
+            target_date: Final/effective submission deadline
+            status: Initial cycle status
+            proposed_target_date: Original proposed date (if target_date was adjusted for working day)
 
         Returns:
             (Cycle, None) if successful
@@ -69,7 +81,9 @@ class CycleService:
                     f"Cycle {open_cycle.id} is already OPEN. Close it before opening a new cycle.",
                 )
 
-        cycle = self.repository.create(start_date, end_date, target_date, status)
+        cycle = self.repository.create(
+            start_date, end_date, target_date, status, proposed_target_date
+        )
         return cycle, None
 
     def get_cycle(self, cycle_id: int) -> Optional[Cycle]:
@@ -134,11 +148,21 @@ class CycleService:
             cycle_end = current_start + timedelta(days=cycle_length_days - 1)
             submission_deadline = cycle_end + timedelta(days=submission_window_days)
 
+            # Track proposed date before adjustment
+            proposed_date = submission_deadline
+
             # Adjust target date to working day if enabled
             if adjust_to_working_day:
-                submission_deadline = adjust_target_date_to_working_day(
+                adjusted_date = adjust_target_date_to_working_day(
                     submission_deadline, prefer="previous"
                 )
+                # Only track as proposal if date was actually changed
+                if adjusted_date != submission_deadline:
+                    submission_deadline = adjusted_date
+                else:
+                    proposed_date = None  # No adjustment needed
+            else:
+                proposed_date = None  # Adjustment not requested
 
             # Create cycle (all scheduled cycles start in OPEN state)
             cycle, error = self.create_cycle(
@@ -146,6 +170,7 @@ class CycleService:
                 end_date=cycle_end,
                 target_date=submission_deadline,
                 status=CycleStatus.OPEN,
+                proposed_target_date=proposed_date,
             )
 
             if error:
@@ -277,6 +302,67 @@ class CycleService:
             "skipped_zero_amount": skipped["zero_amount"],
         }
         return created_entries, summary
+
+    def override_target_date(
+        self,
+        cycle_id: int,
+        new_target_date: date,
+        overridden_by: str,
+        override_reason: str,
+    ) -> Tuple[Optional[Cycle], Optional[str]]:
+        """
+        Admin override of cycle target date with audit trail.
+
+        SPEC: Allows admin to manually adjust the submission deadline,
+        storing the original proposed date and reason for the override.
+
+        Args:
+            cycle_id: Cycle to modify
+            new_target_date: New submission deadline
+            overridden_by: Admin username performing override
+            override_reason: Explanation for the change
+
+        Returns:
+            (updated Cycle, None) if successful
+            (None, error_message) if validation fails
+        """
+        cycle = self.repository.get(cycle_id)
+        if not cycle:
+            return None, f"Cycle {cycle_id} not found"
+
+        # Validate new target date is within cycle bounds
+        if new_target_date < cycle.start_date:
+            return None, f"Target date cannot be before cycle start date ({cycle.start_date})"
+        
+        if new_target_date > cycle.end_date + timedelta(days=30):
+            return None, f"Target date cannot be more than 30 days after cycle end date ({cycle.end_date})"
+
+        # Store current target as proposed if not already overridden
+        if cycle.proposed_target_date is None:
+            cycle.proposed_target_date = cycle.target_date
+
+        # Update cycle with override info
+        old_target_date = cycle.target_date
+        cycle.target_date = new_target_date
+        cycle.overridden_by = overridden_by
+        cycle.override_reason = override_reason
+
+        self.db.add(cycle)
+        self.db.commit()
+        self.db.refresh(cycle)
+
+        # Log the override action
+        audit_log = AuditLogCreate(
+            action=AuditAction.CYCLE_TARGET_DATE_OVERRIDDEN,
+            admin_username=overridden_by,
+            entity_type="Cycle",
+            entity_id=cycle.id,
+            details=f"Target date changed from {old_target_date} to {new_target_date}. "
+                    f"Proposed date: {cycle.proposed_target_date}. Reason: {override_reason}"
+        )
+        self.audit_log_repository.create(audit_log)
+
+        return cycle, None
 
     def transition_status(
         self, cycle_id: int, new_status: CycleStatus

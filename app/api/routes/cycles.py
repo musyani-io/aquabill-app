@@ -36,6 +36,14 @@ class AutoTransitionRequest(BaseModel):
     cycle_id: int
 
 
+class OverrideTargetDateRequest(BaseModel):
+    """Request to override cycle target date"""
+
+    new_target_date: date
+    overridden_by: str = Query(..., min_length=1, max_length=100, description="Admin username")
+    override_reason: str = Query(..., min_length=1, max_length=500, description="Reason for override")
+
+
 router = APIRouter(prefix="/cycles", tags=["cycles"])
 
 
@@ -149,6 +157,43 @@ def get_cycle_for_date(check_date: date, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No cycle found for date {check_date}",
         )
+
+    return cycle
+
+
+@router.post("/{cycle_id}/override-target-date", response_model=CycleRead)
+def override_target_date(
+    cycle_id: int,
+    request: OverrideTargetDateRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Admin override of cycle target date with audit trail.
+
+    SPEC: Allows admin to manually adjust the submission deadline when
+    the automatic working day adjustment is not appropriate or when
+    special circumstances require a different deadline.
+
+    The original proposed date is preserved for audit purposes.
+
+    Example:
+        POST /cycles/123/override-target-date
+        {
+            "new_target_date": "2026-02-15",
+            "overridden_by": "admin_john",
+            "override_reason": "Extended deadline due to system outage on original target date"
+        }
+    """
+    service = CycleService(db)
+    cycle, error = service.override_target_date(
+        cycle_id=cycle_id,
+        new_target_date=request.new_target_date,
+        overridden_by=request.overridden_by,
+        override_reason=request.override_reason,
+    )
+
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     return cycle
 

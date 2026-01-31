@@ -37,7 +37,22 @@ class Cycle(Base):
     start_date = Column(Date, nullable=False, index=True)
     end_date = Column(Date, nullable=False, index=True)
     target_date = Column(
-        Date, nullable=False, comment="Deadline for reading submissions"
+        Date, nullable=False, comment="Deadline for reading submissions (final/effective date)"
+    )
+    proposed_target_date = Column(
+        Date,
+        nullable=True,
+        comment="Original proposed target date before admin override (NULL if no override)"
+    )
+    overridden_by = Column(
+        String(100),
+        nullable=True,
+        comment="Admin username who overrode the target date (NULL if no override)"
+    )
+    override_reason = Column(
+        String(500),
+        nullable=True,
+        comment="Reason for target date override (NULL if no override)"
     )
     status = Column(
         String(20), nullable=False, default=CycleStatus.OPEN.value, index=True

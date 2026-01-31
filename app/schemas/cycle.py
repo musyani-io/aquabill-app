@@ -49,6 +49,18 @@ class CycleRead(CycleBase):
 
     id: int
     status: CycleStatus
+    proposed_target_date: Optional[date] = Field(
+        None,
+        description="Original proposed target date before admin override (NULL if no override)"
+    )
+    overridden_by: Optional[str] = Field(
+        None,
+        description="Admin username who overrode the target date (NULL if no override)"
+    )
+    override_reason: Optional[str] = Field(
+        None,
+        description="Reason for target date override (NULL if no override)"
+    )
     created_at: date
     updated_at: date
 
