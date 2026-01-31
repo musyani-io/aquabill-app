@@ -15,7 +15,6 @@ import 'ui/audit_logging_screen.dart';
 import 'ui/baseline_reading_validation_screen.dart';
 import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
-import 'ui/conflict_resolution_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/cycle_management_screen.dart';
 import 'ui/data_export_screen.dart';
@@ -146,27 +145,20 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isAdmin = isAdmin;
       if (_isAdmin) {
-        // Admin: 6 pages (Capture, Clients, Approvals, Cycles, Collectors, Conflicts)
+        // Admin: 3 pages (Dashboard, Capture, SMS)
         _pages = const [
+          AdminDashboardScreen(),
           CaptureScreen(),
-          ClientsScreen(),
-          ReadingApprovalsScreen(),
-          CycleManagementScreen(),
-          AdminScreen(),
-          ConflictsScreen(),
+          SMSNotificationScreen(),
         ];
-        _titles = const [
-          'Capture',
-          'Clients',
-          'Approvals',
-          'Cycles',
-          'Collectors',
-          'Conflicts',
-        ];
+        _titles = const ['Dashboard', 'Capture', 'SMS'];
       } else {
-        // Collector: 3 pages
-        _pages = const [CaptureScreen(), ClientsScreen(), ConflictsScreen()];
-        _titles = const ['Capture', 'Clients', 'Conflicts'];
+        // Collector: 2 pages (Dashboard, Capture)
+        _pages = const [
+          AdminDashboardScreen(),
+          CaptureScreen(),
+        ];
+        _titles = const ['Dashboard', 'Capture'];
       }
       _isLoadingRole = false;
     });
@@ -187,8 +179,7 @@ class _HomePageState extends State<HomePage> {
 
     return Drawer(
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: ListView(
           children: [
             const Padding(
               padding: EdgeInsets.all(16),
@@ -200,14 +191,49 @@ class _HomePageState extends State<HomePage> {
             const Divider(height: 1),
             if (_isAdmin)
               ListTile(
-                leading: const Icon(Icons.dashboard),
-                title: const Text('Dashboard'),
+                leading: const Icon(Icons.compare_arrows),
+                title: const Text('Conflicts'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ConflictsScreen()),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.check_circle_outline),
+                title: const Text('Approvals'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const AdminDashboardScreen(),
+                      builder: (_) => const ReadingApprovalsScreen(),
                     ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.calendar_month),
+                title: const Text('Cycles'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const CycleManagementScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('Collectors'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminScreen()),
                   );
                 },
               ),
@@ -272,32 +298,6 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const AnomalyDetectionScreen(),
-                    ),
-                  );
-                },
-              ),
-            if (_isAdmin)
-              ListTile(
-                leading: const Icon(Icons.compare_arrows),
-                title: const Text('Sync Conflicts'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ConflictResolutionScreen(),
-                    ),
-                  );
-                },
-              ),
-            if (_isAdmin)
-              ListTile(
-                leading: const Icon(Icons.message),
-                title: const Text('SMS Notifications'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SMSNotificationScreen(),
                     ),
                   );
                 },
@@ -455,51 +455,31 @@ class _HomePageState extends State<HomePage> {
         destinations: _isAdmin
             ? const [
                 NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                NavigationDestination(
                   icon: Icon(Icons.edit_note_outlined),
                   selectedIcon: Icon(Icons.edit_note),
                   label: 'Capture',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.people_outlined),
-                  selectedIcon: Icon(Icons.people),
-                  label: 'Clients',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.check_circle_outline),
-                  selectedIcon: Icon(Icons.check_circle),
-                  label: 'Approvals',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.calendar_month_outlined),
-                  selectedIcon: Icon(Icons.calendar_month),
-                  label: 'Cycles',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.admin_panel_settings_outlined),
-                  selectedIcon: Icon(Icons.admin_panel_settings),
-                  label: 'Collectors',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.warning_amber_outlined),
-                  selectedIcon: Icon(Icons.warning_amber),
-                  label: 'Conflicts',
+                  icon: Icon(Icons.message_outlined),
+                  selectedIcon: Icon(Icons.message),
+                  label: 'SMS',
                 ),
               ]
             : const [
                 NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                NavigationDestination(
                   icon: Icon(Icons.edit_note_outlined),
                   selectedIcon: Icon(Icons.edit_note),
                   label: 'Capture',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.people_outlined),
-                  selectedIcon: Icon(Icons.people),
-                  label: 'Clients',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.warning_amber_outlined),
-                  selectedIcon: Icon(Icons.warning_amber),
-                  label: 'Conflicts',
                 ),
               ],
       ),

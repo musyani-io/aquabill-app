@@ -108,16 +108,7 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('SMS Notifications'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadSMS,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
+      appBar: AppBar(),
       body: _buildBody(),
     );
   }
@@ -146,19 +137,19 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
       children: [
         // Filter tabs
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _buildFilterButton('ALL', 'All'),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _buildFilterButton('PENDING', 'Pending'),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _buildFilterButton('SENT', 'Sent'),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _buildFilterButton('DELIVERED', 'Delivered'),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _buildFilterButton('FAILED', 'Failed'),
               ],
             ),
@@ -205,8 +196,10 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: isActive ? Colors.blue : Colors.grey.shade300,
         foregroundColor: isActive ? Colors.white : Colors.black,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: const Size(0, 36),
       ),
-      child: Text(label),
+      child: Text(label, style: const TextStyle(fontSize: 13)),
     );
   }
 

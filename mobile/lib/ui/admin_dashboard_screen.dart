@@ -59,7 +59,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     final metrics = DashboardMetrics(
       totalClients: 2500,
-      totalBalance: 12500000.0, // TZS
+      totalBalance: 250350, // TZS
       pendingReadings: 142,
       pendingApprovals: 28,
       completedCycles: 12,
@@ -93,7 +93,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -132,6 +131,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,31 +148,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.2,
+            childAspectRatio: 1.1,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              _buildMetricCard(
+              _buildCompactMetricCard(
                 'Total Clients',
                 _metrics!.totalClients.toString(),
                 Colors.blue,
                 Icons.people,
               ),
-              _buildMetricCard(
+              _buildCompactMetricCard(
                 'Total Balance',
-                'TZS ${NumberFormat('#,##0').format(_metrics!.totalBalance.toInt())}',
+                'TZS ${(_metrics!.totalBalance / 1000).toStringAsFixed(1)}k',
                 Colors.green,
                 Icons.account_balance_wallet,
               ),
-              _buildMetricCard(
-                'Pending Readings',
+              _buildCompactMetricCard(
+                'Pending',
                 _metrics!.pendingReadings.toString(),
                 Colors.orange,
                 Icons.water_drop,
               ),
-              _buildMetricCard(
-                'Collection Rate',
-                '${_metrics!.collectionRate}%',
+              _buildCompactMetricCard(
+                'Collection',
+                '${_metrics!.collectionRate.toStringAsFixed(1)}%',
                 Colors.teal,
                 Icons.trending_up,
               ),
@@ -185,35 +185,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             'Alerts & Issues',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           GridView.count(
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.2,
+            childAspectRatio: 1.1,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              _buildAlertCard(
-                'Pending Approvals',
+              _buildCompactAlertCard(
+                'Approvals',
                 _metrics!.pendingApprovals.toString(),
                 Colors.red,
                 Icons.check_circle_outline,
               ),
-              _buildAlertCard(
-                'Anomalies Detected',
+              _buildCompactAlertCard(
+                'Anomalies',
                 _metrics!.anomaliesDetected.toString(),
                 Colors.deepOrange,
                 Icons.warning_amber,
               ),
-              _buildAlertCard(
+              _buildCompactAlertCard(
                 'Failed SMS',
                 _metrics!.failedSMS.toString(),
                 Colors.purple,
                 Icons.sms_failed,
               ),
-              _buildAlertCard(
-                'Completed Cycles',
+              _buildCompactAlertCard(
+                'Cycles Done',
                 _metrics!.completedCycles.toString(),
                 Colors.green,
                 Icons.done_all,
@@ -264,6 +264,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Widget _buildCompactMetricCard(
+    String title,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          border: Border(left: BorderSide(color: color, width: 2)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 18),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMetricCard(
     String title,
     String value,
@@ -291,6 +333,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               value,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactAlertCard(
+    String title,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      color: color.withOpacity(0.08),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 18),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+            Text(
+              title,
+              style: TextStyle(fontSize: 11, color: color.withOpacity(0.7)),
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
