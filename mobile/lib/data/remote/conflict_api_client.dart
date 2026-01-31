@@ -83,9 +83,7 @@ class AssignConflictRequest {
   AssignConflictRequest({required this.assignedTo});
 
   Map<String, String> toQueryParams() {
-    return {
-      'assigned_to': assignedTo,
-    };
+    return {'assigned_to': assignedTo};
   }
 }
 
@@ -93,10 +91,7 @@ class ResolveConflictRequest {
   final String resolvedBy;
   final String? resolutionNotes;
 
-  ResolveConflictRequest({
-    required this.resolvedBy,
-    this.resolutionNotes,
-  });
+  ResolveConflictRequest({required this.resolvedBy, this.resolutionNotes});
 
   Map<String, String?> toQueryParams() {
     return {
@@ -131,19 +126,14 @@ class ConflictApiClient {
     try {
       final response = await _dio.get(
         '/issues/conflicts',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-        },
+        queryParameters: {'skip': skip, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((json) => ConflictResponse.fromJson(json)).toList();
       } else {
-        throw ApiException(
-          'Failed to fetch conflicts: ${response.statusCode}',
-        );
+        throw ApiException('Failed to fetch conflicts: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -158,9 +148,7 @@ class ConflictApiClient {
       if (response.statusCode == 200) {
         return ConflictResponse.fromJson(response.data);
       } else {
-        throw ApiException(
-          'Failed to fetch conflict: ${response.statusCode}',
-        );
+        throw ApiException('Failed to fetch conflict: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -180,9 +168,7 @@ class ConflictApiClient {
         final List<dynamic> data = response.data;
         return data.map((json) => ConflictResponse.fromJson(json)).toList();
       } else {
-        throw ApiException(
-          'Failed to fetch conflicts: ${response.statusCode}',
-        );
+        throw ApiException('Failed to fetch conflicts: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -192,17 +178,13 @@ class ConflictApiClient {
   /// Get conflicts assigned to admin
   Future<List<ConflictResponse>> getConflictsByAdmin(String adminId) async {
     try {
-      final response = await _dio.get(
-        '/issues/conflicts/admin/$adminId',
-      );
+      final response = await _dio.get('/issues/conflicts/admin/$adminId');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((json) => ConflictResponse.fromJson(json)).toList();
       } else {
-        throw ApiException(
-          'Failed to fetch conflicts: ${response.statusCode}',
-        );
+        throw ApiException('Failed to fetch conflicts: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -223,9 +205,7 @@ class ConflictApiClient {
       if (response.statusCode == 200) {
         return ConflictResponse.fromJson(response.data);
       } else {
-        throw ApiException(
-          'Failed to assign conflict: ${response.statusCode}',
-        );
+        throw ApiException('Failed to assign conflict: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -258,9 +238,7 @@ class ConflictApiClient {
   /// Archive a resolved conflict
   Future<ConflictResponse> archiveConflict(int conflictId) async {
     try {
-      final response = await _dio.post(
-        '/issues/conflicts/$conflictId/archive',
-      );
+      final response = await _dio.post('/issues/conflicts/$conflictId/archive');
 
       if (response.statusCode == 200) {
         return ConflictResponse.fromJson(response.data);
@@ -276,7 +254,8 @@ class ConflictApiClient {
 
   ApiException _handleDioError(DioException e) {
     if (e.response != null) {
-      final message = e.response?.data['detail'] ?? e.message ?? 'Unknown error';
+      final message =
+          e.response?.data['detail'] ?? e.message ?? 'Unknown error';
       return ApiException(message);
     }
     return ApiException(e.message ?? 'Network error');

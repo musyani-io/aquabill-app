@@ -88,9 +88,7 @@ class _ConflictResolutionScreenState extends State<ConflictResolutionScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final request = AssignConflictRequest(
-        assignedTo: _currentUser,
-      );
+      final request = AssignConflictRequest(assignedTo: _currentUser);
 
       await _apiClient.assignConflict(conflict.id, request);
 
@@ -164,7 +162,8 @@ class _ConflictResolutionScreenState extends State<ConflictResolutionScreen> {
               decoration: const InputDecoration(
                 labelText: 'Resolution Notes *',
                 border: OutlineInputBorder(),
-                hintText: 'e.g., Selected reading from collector A, verified on site',
+                hintText:
+                    'e.g., Selected reading from collector A, verified on site',
               ),
               maxLines: 3,
               autofocus: true,
@@ -357,7 +356,10 @@ class _ConflictResolutionScreenState extends State<ConflictResolutionScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _getSeverityColor(conflict.severity),
                     borderRadius: BorderRadius.circular(4),
@@ -387,10 +389,7 @@ class _ConflictResolutionScreenState extends State<ConflictResolutionScreen> {
                 children: [
                   const Text(
                     'Conflict Details:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
                   Text(

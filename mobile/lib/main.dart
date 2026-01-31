@@ -21,6 +21,7 @@ import 'ui/meter_rollover_screen.dart';
 import 'ui/payment_recording_screen.dart';
 import 'ui/reading_approvals_screen.dart';
 import 'ui/settings_screen.dart';
+import 'ui/sms_notification_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -265,6 +266,19 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const ConflictResolutionScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.message),
+                title: const Text('SMS Notifications'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SMSNotificationScreen(),
                     ),
                   );
                 },
