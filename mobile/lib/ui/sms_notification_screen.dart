@@ -136,10 +136,7 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
             const SizedBox(height: 16),
             Text(_error!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadSMS,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _loadSMS, child: const Text('Retry')),
           ],
         ),
       );
@@ -249,7 +246,10 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(sms.status),
                     borderRadius: BorderRadius.circular(4),
@@ -285,10 +285,7 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    sms.messageBody,
-                    style: const TextStyle(fontSize: 13),
-                  ),
+                  Text(sms.messageBody, style: const TextStyle(fontSize: 13)),
                 ],
               ),
             ),
@@ -298,26 +295,17 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
               children: [
                 Text(
                   'Created: ${dateFormat.format(sms.createdAt)}',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                 ),
                 if (sms.sentAt != null)
                   Text(
                     'Sent: ${dateFormat.format(sms.sentAt!)}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                   ),
                 if (sms.deliveredAt != null)
                   Text(
                     'Delivered: ${dateFormat.format(sms.deliveredAt!)}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                   ),
               ],
             ),
@@ -374,7 +362,11 @@ class _SMSNotificationScreenState extends State<SMSNotificationScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning, color: Colors.orange, size: 18),
+                        const Icon(
+                          Icons.warning,
+                          color: Colors.orange,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(

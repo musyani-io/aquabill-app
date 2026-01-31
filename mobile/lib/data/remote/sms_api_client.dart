@@ -110,10 +110,7 @@ class SMSApiClient {
     try {
       final response = await _dio.get(
         '/sms',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-        },
+        queryParameters: {'skip': skip, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
@@ -137,9 +134,7 @@ class SMSApiClient {
       if (response.statusCode == 200) {
         return SMSMessageResponse.fromJson(response.data);
       } else {
-        throw ApiException(
-          'Failed to fetch SMS: ${response.statusCode}',
-        );
+        throw ApiException('Failed to fetch SMS: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -154,10 +149,7 @@ class SMSApiClient {
     try {
       final response = await _dio.get(
         '/sms/pending',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-        },
+        queryParameters: {'skip': skip, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
@@ -182,10 +174,7 @@ class SMSApiClient {
     try {
       final response = await _dio.get(
         '/sms/client/$clientId',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-        },
+        queryParameters: {'skip': skip, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
@@ -210,10 +199,7 @@ class SMSApiClient {
     try {
       final response = await _dio.get(
         '/sms/phone/$phoneNumber',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-        },
+        queryParameters: {'skip': skip, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
@@ -237,10 +223,7 @@ class SMSApiClient {
     try {
       final response = await _dio.get(
         '/sms/failed',
-        queryParameters: {
-          'skip': skip,
-          'limit': limit,
-        },
+        queryParameters: {'skip': skip, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
@@ -258,7 +241,8 @@ class SMSApiClient {
 
   ApiException _handleDioError(DioException e) {
     if (e.response != null) {
-      final message = e.response?.data['detail'] ?? e.message ?? 'Unknown error';
+      final message =
+          e.response?.data['detail'] ?? e.message ?? 'Unknown error';
       return ApiException(message);
     }
     return ApiException(e.message ?? 'Network error');

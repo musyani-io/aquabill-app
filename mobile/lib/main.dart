@@ -7,18 +7,24 @@ import 'core/auth_service.dart';
 import 'core/providers.dart';
 import 'data/local/daos/sync_queue_dao.dart';
 import 'domain/sync/background_sync_service.dart';
+import 'ui/admin_dashboard_screen.dart';
 import 'ui/admin_screen.dart';
+import 'ui/alert_notification_screen.dart';
 import 'ui/anomaly_detection_screen.dart';
+import 'ui/audit_logging_screen.dart';
 import 'ui/baseline_reading_validation_screen.dart';
 import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
 import 'ui/conflict_resolution_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/cycle_management_screen.dart';
+import 'ui/data_export_screen.dart';
 import 'ui/ledger_entries_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/meter_rollover_screen.dart';
+import 'ui/offline_sync_screen.dart';
 import 'ui/payment_recording_screen.dart';
+import 'ui/penalty_management_screen.dart';
 import 'ui/reading_approvals_screen.dart';
 import 'ui/settings_screen.dart';
 import 'ui/sms_notification_screen.dart';
@@ -194,6 +200,19 @@ class _HomePageState extends State<HomePage> {
             const Divider(height: 1),
             if (_isAdmin)
               ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text('Dashboard'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AdminDashboardScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
                 leading: const Icon(Icons.receipt_long),
                 title: const Text('Ledger'),
                 onTap: () {
@@ -283,6 +302,65 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.warning),
+                title: const Text('Penalties'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PenaltyManagementScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Audit Logs'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AuditLoggingScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.file_download),
+                title: const Text('Data Export'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DataExportScreen()),
+                  );
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.cloud_sync),
+              title: const Text('Offline Sync'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const OfflineSyncScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Alerts'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AlertNotificationScreen(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),
