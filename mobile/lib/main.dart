@@ -12,6 +12,7 @@ import 'ui/anomaly_detection_screen.dart';
 import 'ui/baseline_reading_validation_screen.dart';
 import 'ui/capture_screen.dart';
 import 'ui/clients_screen.dart';
+import 'ui/conflict_resolution_screen.dart';
 import 'ui/conflicts_screen.dart';
 import 'ui/cycle_management_screen.dart';
 import 'ui/ledger_entries_screen.dart';
@@ -251,6 +252,19 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const AnomalyDetectionScreen(),
+                    ),
+                  );
+                },
+              ),
+            if (_isAdmin)
+              ListTile(
+                leading: const Icon(Icons.compare_arrows),
+                title: const Text('Sync Conflicts'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ConflictResolutionScreen(),
                     ),
                   );
                 },
